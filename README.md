@@ -3,35 +3,7 @@
 By using the C library libwebsockets as a base, it has been shown to scale 5-16x better in memory usage compared to ```ws```.
 
 ## Overview
-lws currently supports acting as a WebSocket server using the following interface:
-```javascript
-var lws = require('lws'); // Load the native module
-var server = new lws.Server({ port: 3000 }); // Create a server listening to port 3000
-
-server.on('connection', function(socket) { // Register a callback for handling established connections
-    socket.on('message', function(str) { // Register a callback for handling received messages
-        console.log('message: ' + str);
-    });
-    socket.send('something sent on connection'); // Queue a string for transfer
-});
-
-```
-The corresponding C++ interface which is being wrapped is:
-```c++
-#include <lws>
-
-auto server = new lws::Server(3000);
-
-server.onConnection([](Socket &socket) {
-    socket.onMessage([](std::string &str) {
-        cout << "message: " << str << endl;
-    });
-    socket.send("something sent on connection");
-});
-
-server.run();
-
-```
+todo
 ## Installing
 ```npm install lws``` will install lws.node, a binary C++ addon with dependencies on libc, libev, libuv, etc.
 
