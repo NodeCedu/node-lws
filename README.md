@@ -16,6 +16,22 @@ server.on('connection', function(socket) { // Register a callback for handling e
 });
 
 ```
+The corresponding C++ interface which is being wrapped is:
+```c++
+#include <lws>
+
+auto server = new lws::Server(3000);
+
+server.onConnection([](Socket &socket) {
+    socket.onMessage([](std::string &str) {
+        cout << "message: " << str << endl;
+    });
+    socket.send("something sent on connection");
+});
+
+server.run();
+
+```
 ## Installing
 ```npm install lws``` will install lws.node, a binary C++ addon with dependencies on libc, libev, libuv, etc.
 
