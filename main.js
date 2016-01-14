@@ -14,5 +14,4 @@ server.on('close', function (socket) {
 	console.log('Disconnection');
 });
 
-// Shouldn't be needed later on!
 server.run();

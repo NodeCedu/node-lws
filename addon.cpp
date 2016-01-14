@@ -2,6 +2,11 @@
 #include <node_object_wrap.h>
 using namespace v8;
 
+#include <cstring>
+#include <iostream>
+#include <future>
+using namespace std;
+
 #include "lws.h"
 
 class Server : public node::ObjectWrap {
@@ -19,12 +24,7 @@ private:
     static v8::Persistent<v8::Function> constructor;
 };
 
-void InitAll(Local<Object> exports)
-{
-    Server::Init(exports);
-}
-
-NODE_MODULE(lws, InitAll)
+NODE_MODULE(lws, Server::Init)
 
 Persistent<Function> Server::constructor;
 
@@ -73,49 +73,67 @@ void Server::New(const FunctionCallbackInfo<Value> &args)
     }
 }
 
-#include <iostream>
-using namespace std;
+// These should be captured
+Persistent<Function> connectionCallback, closeCallback, messageCallback;
+Isolate *isolate;
 
-#include <cstring>
+#include <uv.h>
+
+auto *uvLoop = uv_default_loop();
 
 void Server::on(const FunctionCallbackInfo<Value> &args)
 {
     lws::Server &server = ObjectWrap::Unwrap<Server>(args.Holder())->server;
 
-    if (!strcmp(*v8::String::Utf8Value(args[0]->ToString()), "connection")) {
-        cout << "Registering connection callback!" << endl;
+    isolate = args.GetIsolate();
 
+    if (!strcmp(*v8::String::Utf8Value(args[0]->ToString()), "connection")) {
+
+        connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onConnection([](lws::Socket socket) {
-            cout << "Connection" << endl;
+
+            Local<Function> f = Local<Function>::New(isolate, connectionCallback);
+            f->Call(Null(isolate), 0, nullptr);
+
+            // Fore libuv to call the callbacks from main thread
+            /*uv_queue_work(uvLoop, nullptr, [](uv_work_s *user){
+                cout << "From thread" << endl;
+            }, [](uv_work_s *user, int status) {
+                cout << "From main thread" << endl;
+                Local<Function> f = Local<Function>::New(isolate, connectionCallback);
+                f->Call(Null(isolate), 0, nullptr);
+            });*/
         });
     }
     else if (!strcmp(*v8::String::Utf8Value(args[0]->ToString()), "close")) {
-        cout << "Registering close callback!" << endl;
 
+        closeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onDisconnection([](lws::Socket socket) {
-            cout << "Close" << endl;
+
+            Local<Function> f = Local<Function>::New(isolate, closeCallback);
+            f->Call(Null(isolate), 0, nullptr);
         });
     }
     else if (!strcmp(*v8::String::Utf8Value(args[0]->ToString()), "message")) {
-        cout << "Registering message callback!" << endl;
 
+        messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onMessage([](lws::Socket socket, std::string message) {
-            cout << "Message: " << message << endl;
+
+            Local<Function> f = Local<Function>::New(isolate, messageCallback);
+
+            const unsigned argc = 2;
+            Local<Value> argv[argc] = { String::NewFromUtf8(isolate, "socket object here"), String::NewFromUtf8(isolate, message.c_str()) };
+            f->Call(Null(isolate), argc, argv);
+
         });
     }
-
-    //
-
-    //Server *obj = ObjectWrap::Unwrap<Server>(args.Holder());
-    //obj->value_ += 1;
-
-    //args.GetReturnValue().Set(Number::New(isolate, obj->value_));
 }
 
 void Server::run(const FunctionCallbackInfo<Value> &args)
 {
-    lws::Server &server = ObjectWrap::Unwrap<Server>(args.Holder())->server;
+    lws::Server *server = &ObjectWrap::Unwrap<Server>(args.Holder())->server;
 
-    cout << "Running server now" << endl;
-    server.run();
+    //async(launch::async, [server] {
+        server->run();
+    //});
 }
