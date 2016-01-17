@@ -1,4 +1,4 @@
-var lws = require("./build/Release/lws");
+var lws = require('bindings')("lws.node");
 
 var server = new lws.Server(3000);
 var numConnections = 0;
