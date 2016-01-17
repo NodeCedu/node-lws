@@ -3,6 +3,12 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+// We use epoll on Linux, kqueue on OS X
+#ifdef __APPLE__
+#define LWS_FD_BACKEND EVBACKEND_KQUEUE
+#else
+#define LWS_FD_BACKEND EVBACKEND_EPOLL
+#endif
 
 #include <iostream>
 using namespace std;
@@ -67,7 +73,6 @@ lws::Server::Server(unsigned int port)
     info.port = port;
     info.protocols = protocols;
     info.gid = info.uid = -1;
-    info.extensions = clws::lws_get_internal_extensions();
     info.user = &internals;
     info.options = clws::LWS_SERVER_OPTION_LIBEV;
 
@@ -81,7 +86,7 @@ lws::Server::Server(unsigned int port)
     }
 
     clws::lws_sigint_cfg(context, 0, nullptr);
-    clws::lws_initloop(context, loop = ev_loop_new());
+    clws::lws_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND));
 }
 
 void lws::Server::onConnection(void (*connectionCallback)(lws::Socket socket))
