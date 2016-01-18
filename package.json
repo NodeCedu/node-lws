@@ -1,7 +1,21 @@
 {
   "name": "lws",
   "version": "0.0.1",
-  "private": true,
+  "description": "Node wrapper for libwebsockets",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexhultman/node-lws"
+  },
+  "author": "Alex Hultman, Daniel Kleveros",
+  "license": "MIT",
+  "keywords": [
+    "websocket",
+    "websockets",
+    "libwebsockets"
+  ],
+  "engines": {
+    "node": ">=0.10.21"
+  },
   "scripts": {
     "start": "node ./main.js"
   },
