@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 using namespace std;
 
 #include "lws.h"
@@ -9,6 +10,8 @@ int main(int argc, char *argv[])
 
     server.onConnection([](lws::Socket socket) {
         cout << "Connection" << endl;
+        string str = "some message";
+        socket.send(str, false);
     });
 
     server.onDisconnection([](lws::Socket socket) {

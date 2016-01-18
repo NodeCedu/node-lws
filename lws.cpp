@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdarg.h>
+#include <cstring>
 
 // We use epoll on Linux, kqueue on OS X
 #ifdef __APPLE__
@@ -25,12 +26,20 @@ namespace clws
 int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void *in, size_t len)
 {
     lws::ServerInternals *serverInternals = (lws::ServerInternals *) lws_context_user(lws_get_context(wsi));
-    /*SocketExtension *ext = (SocketExtension *) user;*/
+    SocketExtension *ext = (SocketExtension *) user;
 
     switch (reason) {
+    case clws::LWS_CALLBACK_SERVER_WRITEABLE:
+    {
+        lws_write(wsi, (unsigned char *) ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, ext->length, ext->binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
+        delete [] ext->buffer;
+        ext->buffer = nullptr;
+        break;
+    }
+
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
-        //ext->buffer = nullptr;
+        ext->buffer = nullptr;
         serverInternals->connectionCallback({wsi, user});
         break;
     }
@@ -38,11 +47,11 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_CLOSED:
     {
         // Mark socket as closed and delete eventual buffer
-        /*ext->length = -1;
+        ext->length = -1;
         if (ext->buffer) {
             delete [] ext->buffer;
             ext->buffer = nullptr;
-        }*/
+        }
 
         serverInternals->disconnectionCallback({wsi, user});
 
@@ -59,9 +68,29 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     }
     return 0;
 }
+
+Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
+{
+
 }
 
-lws::Server::Server(unsigned int port)
+void Socket::send(string &data, bool binary)
+{
+    SocketExtension *ext = (SocketExtension *) extension;
+    // Skip sending if socket has been closed
+    if (ext->length != -1) {
+        ext->length = data.length();
+        ext->buffer = new char[LWS_SEND_BUFFER_PRE_PADDING + ext->length + LWS_SEND_BUFFER_POST_PADDING];
+        memcpy(ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), ext->length);
+
+        ext->binary = binary;
+
+        // Request notification when writing is allowed
+        lws_callback_on_writable(wsi);
+    }
+}
+
+Server::Server(unsigned int port)
 {
     clws::lws_set_log_level(0, nullptr);
 
@@ -89,24 +118,26 @@ lws::Server::Server(unsigned int port)
     clws::lws_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND));
 }
 
-void lws::Server::onConnection(void (*connectionCallback)(lws::Socket socket))
+void Server::onConnection(void (*connectionCallback)(lws::Socket socket))
 {
     internals.connectionCallback = connectionCallback;
 }
 
-void lws::Server::onMessage(void (*messageCallback)(lws::Socket, string))
+void Server::onMessage(void (*messageCallback)(lws::Socket, string))
 {
     internals.messageCallback = messageCallback;
 }
 
-void lws::Server::onDisconnection(void (*disconnectionCallback)(lws::Socket))
+void Server::onDisconnection(void (*disconnectionCallback)(lws::Socket))
 {
     internals.disconnectionCallback = disconnectionCallback;
 }
 
-void lws::Server::run()
+void Server::run()
 {
     while(true) {
         ev_run(loop, EVRUN_ONCE);
     }
+}
+
 }

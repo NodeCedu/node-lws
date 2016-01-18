@@ -2,6 +2,7 @@
 #define LWS_H
 
 #include <string>
+#include <vector>
 
 namespace lws
 {
@@ -13,11 +14,17 @@ struct lws;
 }
 
 struct Socket {
+private:
     clws::lws *wsi;
     void *extension;
+    std::vector<char *> messageQueue;
+public:
+    Socket(clws::lws *wsi, void *extension);
+    void send(std::string &data, bool binary);
 };
 
 struct SocketExtension {
+    bool binary;
     char *buffer;
     unsigned int length;
 };
