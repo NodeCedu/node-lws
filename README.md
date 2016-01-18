@@ -1,7 +1,7 @@
-# lws: a (lightweight) node.js websocket library
-```lws``` is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It implements an interface similar to the one available in [ws](https://github.com/websockets/ws).
+# node-lws: a (lightweight) node.js websocket library
+```node-lws``` is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It implements an interface similar to the one available in [ws](https://github.com/websockets/ws).
 
-By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```lws``` has been shown to scale 5-16x better in memory usage compared to ```ws```. It has also been shown to perform better, even though this has not been tested as thoroughly.
+By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```node-lws``` *significantly* outperforms ```ws``` in both memory usage and cpu time.
 
 ## Overview
 Consider main.js:
