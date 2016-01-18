@@ -1,5 +1,5 @@
 {
-  "name": "lws",
+  "name": "node-lws",
   "version": "0.0.1",
   "description": "Node wrapper for libwebsockets",
   "repository": {
