@@ -6,7 +6,6 @@
     "start": "node ./main.js"
   },
   "dependencies": {
-    "bindings": "^1.2.1"
   },
   "gypfile": true
 }
