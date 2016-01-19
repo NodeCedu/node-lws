@@ -4,6 +4,6 @@
   "scripts": {
     "build": "cd .. && make"
   },
-  "main": "index.js",
+  "main": "lws.js",
   "description": "Node.js addon for libwebsockets"
 }
