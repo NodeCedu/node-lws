@@ -1,0 +1,9 @@
+{
+  "name": "lws",
+  "version": "0.0.5",
+  "scripts": {
+    "build": "cd .. && make"
+  },
+  "main": "index.js",
+  "description": "Node.js addon for libwebsockets"
+}

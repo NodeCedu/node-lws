@@ -1,7 +1,10 @@
-all:
-	make wrapper
-	make addon
-wrapper:
-	g++ -O2 -std=c++11 main.cpp lws.cpp -lwebsockets -lev
 addon:
 	node-gyp configure build
+	cp README.md ./npm/README.md
+linux:
+	make addon
+	cp ./build/Release/lws.node ./npm/lws_linux.node
+	cp /usr/lib/libwebsockets.so.6 ./npm/libwebsockets.so.6
+mac:
+	make addon
+	cp ./build/Release/lws.node ./npm/lws_mac.node
