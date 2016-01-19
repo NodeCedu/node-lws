@@ -15,7 +15,7 @@
                 }]
         ],
         "link_settings": {
-            "libraries": ["-lwebsockets", "-lev"]
+            "libraries": ["-l:libwebsockets.a", "-lev"]
         }
     }]
 }
