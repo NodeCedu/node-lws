@@ -17,9 +17,9 @@
     "node": ">=0.10.21"
   },
   "scripts": {
-    "start": "node ./main.js"
+    "test": "node ./examples/main.js",
+    "install": "node-gyp rebuild"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "gypfile": true
 }
