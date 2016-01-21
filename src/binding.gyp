@@ -13,12 +13,12 @@
                         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
                     },
                     "link_settings": {
-                        "libraries": ["-lev", "/usr/lib64/libwebsockets.a"] 
+                        "libraries": ["-lev", "/usr/lib64/libwebsockets.a"]
                     }
                 },
                   'OS=="linux"', {
                     "link_settings": {
-                        "libraries": ["l:libwebsockets.a", "-lev"]  
+                        "libraries": ["-l:libwebsockets.a", "-lev", "-s"]
                     }
                 }]
         ],
