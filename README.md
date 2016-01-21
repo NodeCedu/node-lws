@@ -30,7 +30,7 @@ console.log('Running server on port 3000');
 server.run();
 ```
 ## Installing
-```npm install lws``` is your friend. This will install pre-compiled binaries for Linux & Mac OS  10.10+. We depend on ```libev``` which can be installed through your package manager (e.g. [Homebrew](http://brew.sh/) for OS X). On Ubuntu the package name is libev4, on Fedora it is libev.
+```npm install lws``` is your friend. This will install pre-compiled binaries for Linux & Mac OS X 10.10+. We depend on ```libev``` which can be installed through your package manager (e.g. [Homebrew](http://brew.sh/) for OS X). On Ubuntu the package name is libev4, on Fedora it is libev.
 
 *Otherwise*, libwebsockets can be cloned, compiled & installed like so:
 ```
