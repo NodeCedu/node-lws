@@ -2,6 +2,9 @@
 ```node-lws``` is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It implements an interface similar to the one available in [ws](https://github.com/websockets/ws).
 
 By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```node-lws``` *significantly* outperforms ```ws``` in both memory usage and cpu time. Since ```ws``` is self entitled "fastest" and "blazingly fast", ```node-lws``` can only be described as "fastester" and "blazinglier fast".
+
+**NOTE:** This project is still very young and has some missing major features. Keep calm and wait for things to fall into place.
+
 ## Overview
 Consider main.js:
 ```javascript
