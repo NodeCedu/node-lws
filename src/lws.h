@@ -13,6 +13,13 @@ struct lws_context;
 struct lws;
 }
 
+struct SocketExtension {
+    void *user;
+    bool binary;
+    char *buffer;
+    unsigned int length;
+};
+
 struct Socket {
 private:
     clws::lws *wsi;
@@ -21,12 +28,10 @@ private:
 public:
     Socket(clws::lws *wsi, void *extension);
     void send(std::string &data, bool binary);
-};
-
-struct SocketExtension {
-    bool binary;
-    char *buffer;
-    unsigned int length;
+    void **getUser()
+    {
+        return &((SocketExtension *) extension)->user;
+    }
 };
 
 class Server;
