@@ -33,16 +33,10 @@ console.log('Running server on port 3000');
 server.run();
 ```
 ## Installing
-```npm install lws``` is your friend. This will install pre-compiled binaries for Linux & Mac OS X 10.7+. We depend on ```libev``` which can be installed through your package manager (e.g. [Homebrew](http://brew.sh/) for OS X). On Ubuntu the package name is libev4, on Fedora it is libev.
+```npm install lws``` is your friend. This will install pre-compiled binaries for Node 4.x (ABI 46) on Linux & Mac OS X 10.7+. We depend on ```libev``` which can be installed through your package manager (e.g. [Homebrew](http://brew.sh/) for OS X). Look for packages named libev or libev4.
 
-```
-brew libev
-npm install lws
-```
-
-*Otherwise*, if you are running any other versions of Node.js(<4.x) or OS, libwebsockets can be cloned, compiled & installed like so [compiling for other Node.js or OS versions](#Compiling-for-other-Node.js-or-OS-versions).
-
-### Compiling for other Node.js or OS versions
+### Manual compilation
+If the pre-compiled binaries don't suffice, you could compile the wrapper manually. It should compile for Node 0.12+. Start by cloning, configuring, compiling and installing libwebsockets:
 ```
 git clone https://github.com/warmcat/libwebsockets.git
 cd libwebsockets
