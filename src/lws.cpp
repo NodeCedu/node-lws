@@ -118,17 +118,17 @@ Server::Server(unsigned int port)
     clws::lws_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND));
 }
 
-void Server::onConnection(void (*connectionCallback)(lws::Socket socket))
+void Server::onConnection(function<void(lws::Socket)> connectionCallback)
 {
     internals.connectionCallback = connectionCallback;
 }
 
-void Server::onMessage(void (*messageCallback)(lws::Socket, string))
+void Server::onMessage(function<void(lws::Socket, string)> messageCallback)
 {
     internals.messageCallback = messageCallback;
 }
 
-void Server::onDisconnection(void (*disconnectionCallback)(lws::Socket))
+void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 {
     internals.disconnectionCallback = disconnectionCallback;
 }

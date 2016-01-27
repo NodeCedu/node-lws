@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace lws
 {
@@ -38,9 +39,9 @@ class Server;
 
 struct ServerInternals {
     Server *server;
-    void (*connectionCallback)(Socket socket);
-    void (*messageCallback)(Socket socket, std::string message);
-    void (*disconnectionCallback)(Socket socket);
+    std::function<void(Socket)> connectionCallback;
+    std::function<void(Socket, std::string message)> messageCallback;
+    std::function<void(Socket)> disconnectionCallback;
 };
 
 class Server
@@ -51,9 +52,9 @@ private:
     ServerInternals internals;
 public:
     Server(unsigned int port);
-    void onConnection(void (*connectionCallback)(Socket socket));
-    void onMessage(void (*messageCallback)(Socket socket, std::string message));
-    void onDisconnection(void (*disconnectionCallback)(Socket socket));
+    void onConnection(std::function<void(Socket)> connectionCallback);
+    void onMessage(std::function<void(Socket, std::string message)> messageCallback);
+    void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void run();
 };
 
