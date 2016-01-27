@@ -56,6 +56,10 @@ public:
     void onMessage(std::function<void(Socket, std::string message)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void run();
+    struct ev_loop *getEventLoop()
+    {
+        return loop;
+    }
 };
 
 }
