@@ -1,22 +1,20 @@
 var lws = require('lws');
-
 var server = new lws.Server(3000);
-var numConnections = 0;
 
 server.on('connection', function (socket) {
-    if (++numConnections % 50 == 0) {
-        console.log('[Connection] Current number of connections: ' + numConnections);
-    }
+    console.log('[Connection]');
+    server.send(socket, 'some message');
+    server.send(socket, 'some other message');
+    server.send(socket, 'some third message');
 });
 
 server.on('message', function (socket, message) {
-    console.log('[Message] ' + message);
+    console.log('[Message: ' + message + ']');
+    server.send(socket, 'two can playeth that game!');
 });
 
 server.on('close', function (socket) {
-    if (--numConnections % 50 == 0) {
-        console.log('[Disconnection] Current number of connections: ' + numConnections);
-    }
+    console.log('[Close]');
 });
 
 console.log('Running server on port 3000');
