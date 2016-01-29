@@ -84,7 +84,7 @@ void Socket::send(string &data, bool binary)
     lws_callback_on_writable(wsi);
 }
 
-Server::Server(unsigned int port)
+Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval)
 {
     clws::lws_set_log_level(0, nullptr);
 
@@ -98,11 +98,9 @@ Server::Server(unsigned int port)
     info.gid = info.uid = -1;
     info.user = &internals;
     info.options = clws::LWS_SERVER_OPTION_LIBEV;
-
-    // TCP keep-alive
-    info.ka_time = 30;
-    info.ka_probes = 3;
-    info.ka_interval = 5;
+    info.ka_time = ka_time;
+    info.ka_probes = ka_probes;
+    info.ka_interval = ka_interval;
 
     if (!(context = clws::lws_create_context(&info))) {
         throw;

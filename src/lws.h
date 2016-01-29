@@ -51,7 +51,7 @@ private:
     clws::lws_context *context;
     ServerInternals internals;
 public:
-    Server(unsigned int port);
+    Server(unsigned int port, unsigned int ka_time = 0, unsigned int ka_probes = 0, unsigned int ka_interval = 0);
     void onConnection(std::function<void(Socket)> connectionCallback);
     void onMessage(std::function<void(Socket, std::string message)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
