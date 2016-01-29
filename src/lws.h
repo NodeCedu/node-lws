@@ -20,7 +20,7 @@ struct SocketExtension {
     struct Message {
         bool binary;
         char *buffer;
-        unsigned int length;
+        size_t length;
         bool owned;
     };
 
