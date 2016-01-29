@@ -12,6 +12,7 @@
 #endif
 
 #include <iostream>
+#include <new>
 using namespace std;
 
 namespace lws
@@ -31,33 +32,38 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     switch (reason) {
     case clws::LWS_CALLBACK_SERVER_WRITEABLE:
     {
-        lws_write(wsi, (unsigned char *) ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, ext->length, ext->binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
-        delete [] ext->buffer;
-        ext->buffer = nullptr;
+        SocketExtension::Message &message = ext->messages.front();
+        lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
+        delete [] message.buffer;
+        ext->messages.pop();
+        if (!ext->messages.empty()) {
+            lws_callback_on_writable(wsi);
+        }
         break;
     }
 
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
-        ext->buffer = nullptr;
-        serverInternals->connectionCallback({wsi, user});
+        new (&ext->messages) queue<SocketExtension::Message>;
+        serverInternals->connectionCallback({wsi, ext});
         break;
     }
 
     case clws::LWS_CALLBACK_CLOSED:
     {
-        if (ext->buffer) {
-            delete [] ext->buffer;
-            ext->buffer = nullptr;
+        while (!ext->messages.empty()) {
+            delete [] ext->messages.front().buffer;
+            ext->messages.pop();
         }
+        ext->messages.~queue<SocketExtension::Message>();
 
-        serverInternals->disconnectionCallback({wsi, user});
+        serverInternals->disconnectionCallback({wsi, ext});
         break;
     }
 
     case clws::LWS_CALLBACK_RECEIVE:
     {
-        serverInternals->messageCallback({wsi, user}, std::string((char *) in, len));
+        serverInternals->messageCallback({wsi, ext}, std::string((char *) in, len));
         break;
     }
     default:
@@ -74,11 +80,13 @@ Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
 void Socket::send(string &data, bool binary)
 {
     SocketExtension *ext = (SocketExtension *) extension;
-    ext->length = data.length();
-    ext->buffer = new char[LWS_SEND_BUFFER_PRE_PADDING + ext->length + LWS_SEND_BUFFER_POST_PADDING];
-    memcpy(ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), ext->length);
-
-    ext->binary = binary;
+    SocketExtension::Message message = {
+        binary,
+        new char[LWS_SEND_BUFFER_PRE_PADDING + data.length() + LWS_SEND_BUFFER_POST_PADDING],
+        data.length()
+    };
+    memcpy(message.buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), message.length);
+    ext->messages.push(message);
 
     // Request notification when writing is allowed
     lws_callback_on_writable(wsi);

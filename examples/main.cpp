@@ -12,6 +12,10 @@ int main(int argc, char *argv[])
         cout << "Connection" << endl;
         string str = "some message";
         socket.send(str, false);
+        str = "some other message";
+        socket.send(str, false);
+        str = "some third message";
+        socket.send(str, false);
     });
 
     server.onDisconnection([](lws::Socket socket) {
