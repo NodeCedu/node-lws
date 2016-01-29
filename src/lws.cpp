@@ -34,7 +34,9 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     {
         SocketExtension::Message &message = ext->messages.front();
         lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
-        delete [] message.buffer;
+        if (message.owned) {
+            delete [] message.buffer;
+        }
         ext->messages.pop();
         if (!ext->messages.empty()) {
             lws_callback_on_writable(wsi);
@@ -79,17 +81,34 @@ Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
 
 void Socket::send(string &data, bool binary)
 {
+    char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + data.length() + LWS_SEND_BUFFER_POST_PADDING];
+    memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), data.length());
+    send(paddedBuffer, data.length(), binary, true);
+}
+
+void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership)
+{
     SocketExtension *ext = (SocketExtension *) extension;
     SocketExtension::Message message = {
         binary,
-        new char[LWS_SEND_BUFFER_PRE_PADDING + data.length() + LWS_SEND_BUFFER_POST_PADDING],
-        data.length()
+        paddedBuffer,
+        length,
+        transferOwnership
     };
-    memcpy(message.buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), message.length);
     ext->messages.push(message);
 
     // Request notification when writing is allowed
     lws_callback_on_writable(wsi);
+}
+
+size_t Socket::getPrePadding()
+{
+    return LWS_SEND_BUFFER_PRE_PADDING;
+}
+
+size_t Socket::getPostPadding()
+{
+    return LWS_SEND_BUFFER_POST_PADDING;
 }
 
 Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval)

@@ -21,6 +21,7 @@ struct SocketExtension {
         bool binary;
         char *buffer;
         unsigned int length;
+        bool owned;
     };
 
     std::queue<Message> messages;
@@ -33,6 +34,9 @@ private:
 public:
     Socket(clws::lws *wsi, void *extension);
     void send(std::string &data, bool binary);
+    void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
+    size_t getPrePadding();
+    size_t getPostPadding();
     void **getUser()
     {
         return &((SocketExtension *) extension)->user;
