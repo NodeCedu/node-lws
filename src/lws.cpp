@@ -46,15 +46,12 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_CLOSED:
     {
-        // Mark socket as closed and delete eventual buffer
-        ext->length = -1;
         if (ext->buffer) {
             delete [] ext->buffer;
             ext->buffer = nullptr;
         }
 
         serverInternals->disconnectionCallback({wsi, user});
-
         break;
     }
 
@@ -77,17 +74,14 @@ Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
 void Socket::send(string &data, bool binary)
 {
     SocketExtension *ext = (SocketExtension *) extension;
-    // Skip sending if socket has been closed
-    if (ext->length != -1) {
-        ext->length = data.length();
-        ext->buffer = new char[LWS_SEND_BUFFER_PRE_PADDING + ext->length + LWS_SEND_BUFFER_POST_PADDING];
-        memcpy(ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), ext->length);
+    ext->length = data.length();
+    ext->buffer = new char[LWS_SEND_BUFFER_PRE_PADDING + ext->length + LWS_SEND_BUFFER_POST_PADDING];
+    memcpy(ext->buffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), ext->length);
 
-        ext->binary = binary;
+    ext->binary = binary;
 
-        // Request notification when writing is allowed
-        lws_callback_on_writable(wsi);
-    }
+    // Request notification when writing is allowed
+    lws_callback_on_writable(wsi);
 }
 
 Server::Server(unsigned int port)
