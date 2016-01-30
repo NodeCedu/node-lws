@@ -1,12 +1,13 @@
-addon:
-	cd src && node-gyp configure build
+default:
+	make `(uname -s)`
 	cp README.md dist/README.md
 	cp LICENSE dist/LICENSE
-	cp src/build/Release/lws.node dist/lws_`(uname -s | tr '[:upper:]' '[:lower:]')`.node
-	rm -rf src/build
+Linux:
+	g++ -std=c++11 -O3 -shared -fPIC -I/usr/include/node src/addon.cpp src/lws.cpp -l:libwebsockets.a -lev -lssl -lcrypto -s -o dist/lws_linux.node
+Darwin:
+	g++ -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -O3 -shared -fPIC -I/usr/include/node src/addon.cpp src/lws.cpp -l:libwebsockets.a -lev -lssl -lcrypto -s -o dist/lws_darwin.node
 clean:
+	rm -f dist/README.md
 	rm -f dist/LICENSE
-	rm -rf src/build
 	rm -f dist/lws_linux.node
 	rm -f dist/lws_darwin.node
-	rm -f dist/README.md
