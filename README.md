@@ -16,6 +16,7 @@ server.on('connection', function (socket) {
     server.send(socket, 'some message');
     server.send(socket, 'some other message');
     server.send(socket, 'some third message');
+    server.setUserData(socket, 'this is private');
 });
 
 server.on('message', function (socket, message) {
@@ -25,6 +26,7 @@ server.on('message', function (socket, message) {
 
 server.on('close', function (socket) {
     console.log('[Close]');
+    console.log(server.getUserData(socket));
 });
 
 console.log('Running server on port 3000');
@@ -52,6 +54,6 @@ The interface is expanding as we go (and will be re-designed in the future). Eve
 * Server.on('connect', function(socket)) *registers an event handler for connections*
 * Server.on('message', function(socket, message)) *registers an event  handler for messages*
 * Server.on('close', function(socket)) *registers an event handler for disconnections*
-* Server.setUserData(socket, value) *sets the user data for this socket* [not wrapped yet]
-* Server.getUserData(socket) *returns the set user data for this socket* [not wrapped yet]
+* Server.setUserData(socket, value) *sets the user data for this socket*
+* Server.getUserData(socket) *returns the set user data for this socket*
 * Server.broadcast("some shared string") *enqueues a string for sending on all open connections* [not implemented yet]
