@@ -9,6 +9,9 @@ using namespace std;
 
 #include "lws.h"
 
+#include <uv.h>
+auto *uvLoop = uv_default_loop();
+
 class Server : public node::ObjectWrap {
 public:
     static void Init(Local<Object> exports);
@@ -22,11 +25,14 @@ private:
     static void on(const FunctionCallbackInfo<Value> &args);
     static void run(const FunctionCallbackInfo<Value> &args);
     static void send(const FunctionCallbackInfo<Value> &args);
+    static void setUserData(const FunctionCallbackInfo<Value> &args);
+    static void getUserData(const FunctionCallbackInfo<Value> &args);
     static Persistent<Function> constructor;
 };
 
 NODE_MODULE(lws, Server::Init)
 
+Persistent<Function> connectionCallback, closeCallback, messageCallback;
 Persistent<Function> Server::constructor;
 
 Server::Server(unsigned int port) : server(port)
@@ -40,7 +46,7 @@ Server::~Server()
 
 void Server::Init(Local<Object> exports)
 {
-    Isolate *isolate = Isolate::GetCurrent();
+    Isolate *isolate = exports->GetIsolate();
 
     // Prepare constructor template
     Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
@@ -51,6 +57,8 @@ void Server::Init(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "on", on);
     NODE_SET_PROTOTYPE_METHOD(tpl, "run", run);
     NODE_SET_PROTOTYPE_METHOD(tpl, "send", send);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
 
     constructor.Reset(isolate, tpl->GetFunction());
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
@@ -75,17 +83,8 @@ void Server::New(const FunctionCallbackInfo<Value> &args)
     }
 }
 
-// These should be captured
-Persistent<Function> connectionCallback, closeCallback, messageCallback;
-Isolate *isolate;
-
-#include <uv.h>
-
-auto *uvLoop = uv_default_loop();
-
-Local<Object> wrapSocket(lws::Socket socket)
+inline Local<Object> wrapSocket(lws::Socket socket, Isolate *isolate)
 {
-    // ROFL!
     struct SocketABI {
         void *wsi;
         void *extension;
@@ -97,59 +96,58 @@ Local<Object> wrapSocket(lws::Socket socket)
     Local<ObjectTemplate> t = ObjectTemplate::New(isolate);
     t->SetInternalFieldCount(2);
 
-    // Wrap socket
     Local<Object> s = t->NewInstance();
     s->SetAlignedPointerInInternalField(0, sa->wsi);
     s->SetAlignedPointerInInternalField(1, sa->extension);
     return s;
 }
 
+inline lws::Socket unwrapSocket(Local<Object> object)
+{
+    return lws::Socket((lws::clws::lws *) object->GetAlignedPointerFromInternalField(0),
+                                          object->GetAlignedPointerFromInternalField(1));
+}
+
 void Server::on(const FunctionCallbackInfo<Value> &args)
 {
     lws::Server &server = ObjectWrap::Unwrap<Server>(args.Holder())->server;
-
-    isolate = args.GetIsolate();
+    Isolate *isolate = args.GetIsolate();
 
     if (!strcmp(*String::Utf8Value(args[0]->ToString()), "connection")) {
-
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server.onConnection([](lws::Socket socket) {
-
-            const unsigned argc = 1;
-            Local<Value> argv[argc] = {wrapSocket(socket)};
-            Local<Function> f = Local<Function>::New(isolate, connectionCallback);
-            f->Call(Null(isolate), argc, argv);
-
-            // Fore libuv to call the callbacks from main thread
-            /*uv_queue_work(uvLoop, nullptr, [](uv_work_s *user){
-                cout << "From thread" << endl;
-            }, [](uv_work_s *user, int status) {
-                cout << "From main thread" << endl;
-                Local<Function> f = Local<Function>::New(isolate, connectionCallback);
-                f->Call(Null(isolate), 0, nullptr);
-            });*/
+        server.onConnection([isolate](lws::Socket socket) {
+            *socket.getUser() = nullptr;
+            Local<Value> argv[] = {wrapSocket(socket, isolate)};
+            Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);
         });
     }
     else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "close")) {
-
         closeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server.onDisconnection([](lws::Socket socket) {
-            const unsigned argc = 1;
-            Local<Value> argv[argc] = {wrapSocket(socket)};
-            Local<Function> f = Local<Function>::New(isolate, closeCallback);
-            f->Call(Null(isolate), argc, argv);
+        server.onDisconnection([isolate](lws::Socket socket) {
+            Local<Value> argv[] = {wrapSocket(socket, isolate)};
+            Local<Function>::New(isolate, closeCallback)->Call(Null(isolate), 1, argv);
+            delete ((string *) *socket.getUser());
         });
     }
     else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "message")) {
-
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server.onMessage([](lws::Socket socket, std::string message) {
-            const unsigned argc = 2;
-            Local<Value> argv[argc] = {wrapSocket(socket), String::NewFromUtf8(isolate, message.c_str())};
-            Local<Function> f = Local<Function>::New(isolate, messageCallback);
-            f->Call(Null(isolate), argc, argv);
+        server.onMessage([isolate](lws::Socket socket, std::string message) {
+            Local<Value> argv[] = {wrapSocket(socket, isolate), String::NewFromUtf8(isolate, message.c_str())};
+            Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 2, argv);
         });
     }
+}
+
+void Server::setUserData(const FunctionCallbackInfo<Value> &args)
+{
+    lws::Socket socket = unwrapSocket(args[0]->ToObject());
+    *socket.getUser() = new string(*String::Utf8Value(args[1]->ToString()));
+}
+
+void Server::getUserData(const FunctionCallbackInfo<Value> &args)
+{
+    lws::Socket socket = unwrapSocket(args[0]->ToObject());
+    args.GetReturnValue().Set(String::NewFromUtf8(args.GetIsolate(), ((string *) *socket.getUser())->c_str()));
 }
 
 void Server::run(const FunctionCallbackInfo<Value> &args)
@@ -163,10 +161,7 @@ void Server::run(const FunctionCallbackInfo<Value> &args)
 
 void Server::send(const FunctionCallbackInfo<Value> &args)
 {
-    Local<Object> s = args[0]->ToObject();
-    lws::Socket socket((lws::clws::lws *) s->GetAlignedPointerFromInternalField(0),
-                       s->GetAlignedPointerFromInternalField(1));
-
+    lws::Socket socket = unwrapSocket(args[0]->ToObject());
     string data = *String::Utf8Value(args[1]->ToString());
     socket.send(data, false);
 }
