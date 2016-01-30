@@ -45,4 +45,13 @@ sudo make install
 ```
 node-lws can then be compiled in a pretty straight forward way.
 ## Documentation
-todo
+The interface is expanding as we go (and will be re-designed in the future). Every functionality is currently implemented in the Server object:
+
+* Server(port) *constructs and returns a Server object*
+* Server.send(socket, "some string") *enqueues a string for sending* (needs work to reduce copying, Buffer support etc)
+* Server.on('connect', function(socket)) *registers an event handler for connections*
+* Server.on('message', function(socket, message)) *registers an event  handler for messages*
+* Server.on('close', function(socket)) *registers an event handler for disconnections*
+* Server.setUserData(socket, value) *sets the user data for this socket* [not wrapped yet]
+* Server.getUserData(socket) *returns the set user data for this socket* [not wrapped yet]
+* Server.broadcast("some shared string") *enqueues a string for sending on all open connections* [not implemented yet]
