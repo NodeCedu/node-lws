@@ -5,6 +5,8 @@ By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```no
 
 **NOTE:** This project is still very young and has some missing major features. Keep calm and wait for things to fall into place.
 
+**ALSO NOTE:** Builds are not up-to-date and things can be completely broken at times. I'm working on it.
+
 ## Overview
 Consider main.js:
 ```javascript
@@ -30,11 +32,12 @@ server.on('close', function (socket) {
 });
 
 console.log('Running server on port 3000');
-server.run();
-
 ```
+
 ## Installing
-```npm install lws``` is your friend. This will install pre-compiled binaries for Node 4.x (ABI 46) on Linux & Mac OS X 10.7+. We depend on ```libev``` which can be installed through your package manager (e.g. [Homebrew](http://brew.sh/) for OS X). Look for packages named libev or libev4.
+```npm install lws``` is your friend.
+* Node 4.x support (ABI 46)
+* Linux & Mac OS X 10.7+
 
 ### Manual compilation
 If the pre-compiled binaries don't suffice, you could compile the wrapper manually. It should compile for Node 0.12+. Start by cloning, configuring, compiling and installing libwebsockets:
