@@ -55,7 +55,11 @@ struct ServerInternals {
 class Server
 {
 private:
+#ifdef LWS_USE_LIBUV
+    void *loop;
+#else
     struct ev_loop *loop;
+#endif
     clws::lws_context *context;
     ServerInternals internals;
 public:
@@ -64,10 +68,17 @@ public:
     void onMessage(std::function<void(Socket, std::string message)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void run();
+#ifdef LWS_USE_LIBUV
+    void *getEventLoop()
+    {
+        return loop;
+    }
+#else
     struct ev_loop *getEventLoop()
     {
         return loop;
     }
+#endif
 };
 
 }

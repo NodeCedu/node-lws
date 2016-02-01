@@ -4,11 +4,13 @@
 #include <stdarg.h>
 #include <cstring>
 
+#ifndef LWS_USE_LIBUV
 // We use epoll on Linux, kqueue on OS X
 #ifdef __APPLE__
 #define LWS_FD_BACKEND EVBACKEND_KQUEUE
 #else
 #define LWS_FD_BACKEND EVBACKEND_EPOLL
+#endif
 #endif
 
 #include <iostream>
@@ -17,7 +19,11 @@ using namespace std;
 
 namespace lws
 {
+#ifdef LWS_USE_LIBUV
+#include <uv.h>
+#else
 #include <ev.h>
+#endif
 
 namespace clws
 {
@@ -134,7 +140,11 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
     }
 
     clws::lws_sigint_cfg(context, 0, nullptr);
+#ifdef LWS_USE_LIBUV
+    clws::lws_initloop(context, (uv_loop_t *) (loop = uv_default_loop()));
+#else
     clws::lws_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND));
+#endif
 }
 
 void Server::onConnection(function<void(lws::Socket)> connectionCallback)
@@ -154,9 +164,15 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 
 void Server::run()
 {
+#ifdef LWS_USE_LIBUV
+    while(true) {
+        uv_run((uv_loop_t *) loop, UV_RUN_ONCE);
+    }
+#else
     while(true) {
         ev_run(loop, EVRUN_ONCE);
     }
+#endif
 }
 
 }

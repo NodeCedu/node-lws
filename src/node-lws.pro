@@ -11,6 +11,6 @@ HEADERS += \
 
 INCLUDEPATH += /usr/include/node
 
-LIBS += -l:libwebsockets.a -lev -lssl -lcrypto -s
+LIBS += -l:libwebsockets.a -luv -lssl -lcrypto -s
 
-QMAKE_CXXFLAGS += -fPIC
+QMAKE_CXXFLAGS += -fPIC -DLWS_USE_LIBUV
