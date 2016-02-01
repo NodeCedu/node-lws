@@ -9,9 +9,6 @@ using namespace std;
 
 #include "lws.h"
 
-#include <uv.h>
-auto *uvLoop = uv_default_loop();
-
 class Server : public node::ObjectWrap {
 public:
     static void Init(Local<Object> exports);
@@ -117,6 +114,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onConnection([isolate](lws::Socket socket) {
             *socket.getUser() = nullptr;
+            HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(socket, isolate)};
             Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);
         });
@@ -124,6 +122,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
     else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "close")) {
         closeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onDisconnection([isolate](lws::Socket socket) {
+            HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(socket, isolate)};
             Local<Function>::New(isolate, closeCallback)->Call(Null(isolate), 1, argv);
             delete ((string *) *socket.getUser());
@@ -132,6 +131,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
     else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "message")) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onMessage([isolate](lws::Socket socket, std::string message) {
+            HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(socket, isolate), String::NewFromUtf8(isolate, message.c_str())};
             Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 2, argv);
         });
