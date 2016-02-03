@@ -55,7 +55,7 @@ struct ServerInternals {
 class Server
 {
 private:
-#ifdef LWS_USE_LIBUV
+#ifdef LIBUV_BACKEND
     void *loop;
 #else
     struct ev_loop *loop;
@@ -68,7 +68,7 @@ public:
     void onMessage(std::function<void(Socket, std::string message)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void run();
-#ifdef LWS_USE_LIBUV
+#ifdef LIBUV_BACKEND
     void *getEventLoop()
     {
         return loop;

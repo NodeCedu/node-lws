@@ -19,7 +19,7 @@ using namespace std;
 
 namespace lws
 {
-#ifdef LWS_USE_LIBUV
+#ifdef LIBUV_BACKEND
 #include <uv.h>
 #else
 #include <ev.h>
@@ -130,7 +130,11 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
     info.protocols = protocols;
     info.gid = info.uid = -1;
     info.user = &internals;
+#ifdef LIBUV_BACKEND
     info.options = clws::LWS_SERVER_OPTION_LIBUV;
+#else
+    info.options = clws::LWS_SERVER_OPTION_LIBEV;
+#endif
     info.ka_time = ka_time;
     info.ka_probes = ka_probes;
     info.ka_interval = ka_interval;
@@ -139,7 +143,7 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
         throw;
     }
 
-#ifdef LWS_USE_LIBUV
+#ifdef LIBUV_BACKEND
     clws::lws_uv_sigint_cfg(context, 0, nullptr);
     clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()), 0);
 #else
@@ -165,7 +169,7 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 
 void Server::run()
 {
-#ifdef LWS_USE_LIBUV
+#ifdef LIBUV_BACKEND
     while(true) {
         uv_run((uv_loop_t *) loop, UV_RUN_ONCE);
     }
