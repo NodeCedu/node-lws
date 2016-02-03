@@ -130,7 +130,7 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
     info.protocols = protocols;
     info.gid = info.uid = -1;
     info.user = &internals;
-    info.options = clws::LWS_SERVER_OPTION_LIBEV;
+    info.options = clws::LWS_SERVER_OPTION_LIBUV;
     info.ka_time = ka_time;
     info.ka_probes = ka_probes;
     info.ka_interval = ka_interval;
@@ -139,11 +139,12 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
         throw;
     }
 
-    clws::lws_sigint_cfg(context, 0, nullptr);
 #ifdef LWS_USE_LIBUV
-    clws::lws_initloop(context, (uv_loop_t *) (loop = uv_default_loop()));
+    clws::lws_uv_sigint_cfg(context, 0, nullptr);
+    clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()), 0);
 #else
-    clws::lws_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND));
+    clws::lws_ev_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND), 0);
+    clws::lws_ev_sigint_cfg(context, 0, nullptr);
 #endif
 }
 
