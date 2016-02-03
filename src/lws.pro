@@ -9,4 +9,6 @@ SOURCES += ../examples/main.cpp \
 HEADERS += \
     lws.h
 
-LIBS += -lwebsockets -lev
+LIBS += -l:libwebsockets.a -luv -lssl -lcrypto
+
+QMAKE_CXXFLAGS += -DLIBUV_BACKEND
