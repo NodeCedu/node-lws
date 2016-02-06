@@ -72,7 +72,7 @@ Returns the private persistent data set on ```socket```.
 
 ### send(message, binary)
 
-Queue a Node.js Buffer for sending. This function call makes exactly one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binray``` flag is ```true```.
+Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
 
 ### ~~sendPaddedBuffer(paddedBuffer, binary)~~
 
