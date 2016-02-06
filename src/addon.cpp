@@ -129,9 +129,10 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
     }
     else if (!strncmp(*eventName, "message", eventName.length())) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server.onMessage([isolate](lws::Socket socket, std::string message) {
+        server.onMessage([isolate](lws::Socket socket, char *data, size_t length) {
             HandleScope hs(isolate);
-            Local<Value> argv[] = {wrapSocket(socket, isolate), String::NewFromUtf8(isolate, message.c_str())};
+            Local<Value> argv[2] = {wrapSocket(socket, isolate)};
+            node::Buffer::New(isolate, data, length).ToLocal(&argv[1]);
             Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 2, argv);
         });
     }

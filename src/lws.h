@@ -48,7 +48,7 @@ class Server;
 struct ServerInternals {
     Server *server;
     std::function<void(Socket)> connectionCallback;
-    std::function<void(Socket, std::string message)> messageCallback;
+    std::function<void(Socket, char *data, size_t length)> messageCallback;
     std::function<void(Socket)> disconnectionCallback;
 };
 
@@ -65,7 +65,7 @@ private:
 public:
     Server(unsigned int port, unsigned int ka_time = 0, unsigned int ka_probes = 0, unsigned int ka_interval = 0);
     void onConnection(std::function<void(Socket)> connectionCallback);
-    void onMessage(std::function<void(Socket, std::string message)> messageCallback);
+    void onMessage(std::function<void(Socket, char *, size_t)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void run();
 #ifdef LIBUV_BACKEND
