@@ -5,6 +5,9 @@ By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```no
 
 **NOTE:** This project started **Jan 13, 2016** and is at version **0.0.12**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report feature requests and other opinions.
 
+## Installing
+```npm install lws``` is your friend. Node 4.x support (ABI 46). Linux ~~& Mac OS X 10.7+~~.
+
 ## Overview
 ```javascript
 var lws = require('lws');
@@ -29,18 +32,6 @@ server.on('close', function (socket) {
 
 console.log('Running server on port 3000');
 ```
-
-## Installing
-```npm install lws``` is your friend.
-* Node 4.x support (ABI 46)
-* Linux ~~& Mac OS X 10.7+~~
-
-**February 6, 2016**  
-* **NOTE:** The published Mac OS X binary is currently not up-to-date. Please use Linux while we sort things out.  
-* **NOTE:** Binaries use the brand new (not finished) libuv backend in libwebsockets. This crashes on disconnection. Will be fixed with time.
-
-## Documentation
-
 ### Class: lws.Server
 
 #### new lws.Server(port)
@@ -91,7 +82,7 @@ Not yet implemented.
 
 Not yet implemented.
 
-### Manual compilation
+## Manual compilation
 If the pre-compiled binaries don't suffice, you could compile the wrapper manually. It should compile for Node 0.12+. Start by cloning, configuring, compiling and installing libwebsockets:
 ```
 git clone https://github.com/warmcat/libwebsockets.git
