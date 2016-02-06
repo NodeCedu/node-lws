@@ -1,9 +1,18 @@
 {
   "name": "lws",
-  "version": "0.0.12",
+  "version": "0.0.15",
   "scripts": {
     "build": "cd .. && make"
   },
   "main": "lws.js",
-  "description": "Node.js addon for libwebsockets"
+  "description": "Node.js addon for libwebsockets",
+  "keywords": [
+    "websockets",
+    "libwebsockets",
+    "lws",
+    "lightweight"
+  ],
+  "homepage": "https://github.com/alexhultman/node-lws",
+  "license": "Modified zlib/libpng",
+  "author": "Alex Hultman <alexhultman@gmail.com> (https://github.com/alexhultman)"
 }
