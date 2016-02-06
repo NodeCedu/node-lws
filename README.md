@@ -3,6 +3,10 @@
 
 By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```node-lws``` *significantly* outperforms ```ws``` in both memory usage and cpu time. Since ```ws``` is self entitled "fastest" and "blazingly fast", ```node-lws``` can only be described as "fastester" and "blazinglier fast".
 
+* node-lws used 140 mb of memory serving 20k connections, which required about 390 mb of memory using ws.
+* node-lws could establish 20k connections in 3276 milliseconds, while ws could do this in 5710 milliseconds.
+* installing the binary addons for ws did not prove to change any of this significantly.
+
 **NOTE:** This project started **Jan 13, 2016** and is at version **0.0.12**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report feature requests and other opinions.
 
 ## Installing
