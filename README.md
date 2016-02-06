@@ -45,7 +45,7 @@ If the pre-compiled binaries don't suffice, you could compile the wrapper manual
 git clone https://github.com/warmcat/libwebsockets.git
 cd libwebsockets
 git checkout libuv-test
-cmake -DLWS_WITH_LIBUV=1 -DCMAKE_C_FLAGS=-fPIC -DLWS_WITHOUT_TESTAPPS=1 -DCMAKE_INSTALL_PREFIX=/usr .
+cmake -DLWS_WITH_LIBUV=1 -DLWS_WITH_LIBEV=0 -DCMAKE_C_FLAGS=-fPIC -DLWS_WITHOUT_TESTAPPS=1 -DCMAKE_INSTALL_PREFIX=/usr .
 make
 sudo make install
 ```
