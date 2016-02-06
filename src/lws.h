@@ -33,7 +33,7 @@ private:
     void *extension;
 public:
     Socket(clws::lws *wsi, void *extension);
-    void send(std::string &data, bool binary);
+    void send(char *data, size_t length, bool binary);
     void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
     size_t getPrePadding();
     size_t getPostPadding();

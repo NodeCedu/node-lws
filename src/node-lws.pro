@@ -13,4 +13,4 @@ INCLUDEPATH += /usr/include/node
 
 LIBS += -l:libwebsockets.a -luv -lssl -lcrypto -s
 
-QMAKE_CXXFLAGS += -fPIC -DLWS_USE_LIBUV
+QMAKE_CXXFLAGS += -fPIC -DLIBUV_BACKEND

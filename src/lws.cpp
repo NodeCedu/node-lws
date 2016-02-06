@@ -85,11 +85,11 @@ Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
 
 }
 
-void Socket::send(string &data, bool binary)
+void Socket::send(char *data, size_t length, bool binary)
 {
-    char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + data.length() + LWS_SEND_BUFFER_POST_PADDING];
-    memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data.c_str(), data.length());
-    send(paddedBuffer, data.length(), binary, true);
+    char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
+    memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
+    send(paddedBuffer, length, binary, true);
 }
 
 void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership)

@@ -1,5 +1,6 @@
 #include <node.h>
 #include <node_object_wrap.h>
+#include <node_buffer.h>
 using namespace v8;
 
 #include <cstring>
@@ -20,7 +21,6 @@ private:
 
     static void New(const FunctionCallbackInfo<Value> &args);
     static void on(const FunctionCallbackInfo<Value> &args);
-    static void run(const FunctionCallbackInfo<Value> &args);
     static void send(const FunctionCallbackInfo<Value> &args);
     static void setUserData(const FunctionCallbackInfo<Value> &args);
     static void getUserData(const FunctionCallbackInfo<Value> &args);
@@ -52,7 +52,6 @@ void Server::Init(Local<Object> exports)
 
     // Prototype
     NODE_SET_PROTOTYPE_METHOD(tpl, "on", on);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "run", run);
     NODE_SET_PROTOTYPE_METHOD(tpl, "send", send);
     NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
@@ -82,18 +81,17 @@ void Server::New(const FunctionCallbackInfo<Value> &args)
 
 inline Local<Object> wrapSocket(lws::Socket socket, Isolate *isolate)
 {
+    // Clean this up!
     struct SocketABI {
         void *wsi;
         void *extension;
     };
-
     SocketABI *sa = (SocketABI *) &socket;
 
-    // Share this template!
-    Local<ObjectTemplate> t = ObjectTemplate::New(isolate);
-    t->SetInternalFieldCount(2);
+    Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
+    socketTemplate->SetInternalFieldCount(2);
 
-    Local<Object> s = t->NewInstance();
+    Local<Object> s = socketTemplate->NewInstance();
     s->SetAlignedPointerInInternalField(0, sa->wsi);
     s->SetAlignedPointerInInternalField(1, sa->extension);
     return s;
@@ -110,7 +108,8 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
     lws::Server &server = ObjectWrap::Unwrap<Server>(args.Holder())->server;
     Isolate *isolate = args.GetIsolate();
 
-    if (!strcmp(*String::Utf8Value(args[0]->ToString()), "connection")) {
+    String::Utf8Value eventName(args[0]->ToString());
+    if (!strncmp(*eventName, "connection", eventName.length())) {
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onConnection([isolate](lws::Socket socket) {
             *socket.getUser() = nullptr;
@@ -119,7 +118,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
             Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);
         });
     }
-    else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "close")) {
+    else if (!strncmp(*eventName, "close", eventName.length())) {
         closeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onDisconnection([isolate](lws::Socket socket) {
             HandleScope hs(isolate);
@@ -128,7 +127,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
             delete ((string *) *socket.getUser());
         });
     }
-    else if (!strcmp(*String::Utf8Value(args[0]->ToString()), "message")) {
+    else if (!strncmp(*eventName, "message", eventName.length())) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server.onMessage([isolate](lws::Socket socket, std::string message) {
             HandleScope hs(isolate);
@@ -138,6 +137,7 @@ void Server::on(const FunctionCallbackInfo<Value> &args)
     }
 }
 
+// these should not copy strings but rather keep the original node::Buffer
 void Server::setUserData(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
@@ -150,18 +150,20 @@ void Server::getUserData(const FunctionCallbackInfo<Value> &args)
     args.GetReturnValue().Set(String::NewFromUtf8(args.GetIsolate(), ((string *) *socket.getUser())->c_str()));
 }
 
-void Server::run(const FunctionCallbackInfo<Value> &args)
-{
-    lws::Server *server = &ObjectWrap::Unwrap<Server>(args.Holder())->server;
-
-    //async(launch::async, [server] {
-        server->run();
-    //});
-}
-
+//Server.send(Buffer, Boolean)
 void Server::send(const FunctionCallbackInfo<Value> &args)
 {
-    lws::Socket socket = unwrapSocket(args[0]->ToObject());
-    string data = *String::Utf8Value(args[1]->ToString());
-    socket.send(data, false);
+    unwrapSocket(args[0]->ToObject())
+            .send(node::Buffer::Data(args[1])
+            ,node::Buffer::Length(args[1])
+            , args[2]->BooleanValue());
 }
+
+// todo: zero-copy from JavaScript
+/*void Server::sendPaddedBuffer(const FunctionCallbackInfo<Value> &args)
+{
+    unwrapSocket(args[0]->ToObject())
+            .send(node::Buffer::Data(args[1])
+            ,node::Buffer::Length(args[1])
+            , false);
+}*/
