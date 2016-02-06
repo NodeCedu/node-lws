@@ -71,7 +71,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_RECEIVE:
     {
-        serverInternals->messageCallback({wsi, ext}, (char *) in, len);
+        serverInternals->messageCallback({wsi, ext}, (char *) in, len, lws_frame_is_binary(wsi));
         break;
     }
     default:
@@ -157,7 +157,7 @@ void Server::onConnection(function<void(lws::Socket)> connectionCallback)
     internals.connectionCallback = connectionCallback;
 }
 
-void Server::onMessage(function<void(lws::Socket, char *, size_t)> messageCallback)
+void Server::onMessage(function<void(lws::Socket, char *, size_t, bool)> messageCallback)
 {
     internals.messageCallback = messageCallback;
 }
