@@ -1,15 +1,13 @@
 # Lightweight WebSockets for Node.js
-```node-lws``` is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It implements an interface similar to the one available in [ws](https://github.com/websockets/ws).
+```node-lws``` is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It exposes an easy to use interface much like the one available in [ws](https://github.com/websockets/ws). Since ```ws``` developers use only superlatives in their own description, ```node-lws``` can only be described as "fastester".
 
-By using the ridiculously lightweight ```libwebsockets``` as a foundation, ```node-lws``` *significantly* outperforms ```ws``` in both memory usage and real time. Since ```ws``` is self entitled "fastest" and "blazingly fast", ```node-lws``` can only be described as "fastester" and "blazinglier fast":
+* ```node-lws``` uses 40% the memory per connection compared to ```ws```.
+* ```node-lws``` establishes connections in 60% the time compared to ```ws```.
+* ```node-lws``` echoes messages in 20% the time compared to ```ws```.
 
-* node-lws uses 40% the memory per connection compared to ws.
-* node-lws establishes connections in 60% the time compared to ws.
-* node-lws echoes messages in 20% the time compared to ws.
+*Values measured with binary addons installed for ```ws```. Multiple runs were conducted - both hot and cold.*
 
-*Values measured with binary addons installed for ws. Multiple runs were conducted and I even prepared ws by letting V8 analyze what functions were hot and JIT them.*
-
-**NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report feature requests and other opinions.
+**NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
 
 ## Installing
 ```npm install lws``` is your friend. Node 4.x support (ABI 46). Linux ~~& Mac OS X 10.7+~~.
