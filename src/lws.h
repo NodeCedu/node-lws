@@ -28,7 +28,7 @@ struct SocketExtension {
 };
 
 struct Socket {
-private:
+protected:
     clws::lws *wsi;
     void *extension;
 public:
