@@ -1,3 +1,5 @@
+/* This example is out of date */
+
 #include <iostream>
 #include <string>
 using namespace std;
