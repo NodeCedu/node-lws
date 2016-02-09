@@ -9,8 +9,6 @@ SOURCES += lws.cpp \
 HEADERS += \
     lws.h
 
-INCLUDEPATH += /usr/include/node
-
 LIBS += -l:libwebsockets.a -luv -lssl -lcrypto -s
 
 QMAKE_CXXFLAGS += -fPIC -DLIBUV_BACKEND
