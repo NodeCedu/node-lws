@@ -10,7 +10,10 @@
 **NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
 
 ## Installing
-```npm install lws``` is your friend. Node 4.x support (ABI 46). Linux ~~& Mac OS X 10.7+~~.
+![](https://nodei.co/npm/lws.png)
+
+* Node 4.x support (ABI 46).
+* Linux ~~& Mac OS X 10.7+~~ (Mac will be supported).
 
 ## Overview
 ```javascript
