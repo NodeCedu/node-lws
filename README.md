@@ -7,7 +7,7 @@
 * Node 4.x support (ABI 46).
 * Linux ~~& Mac OS X 10.7+~~ (Mac will be supported).
 
-**NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
+**NOTE:** This project started **Jan 13, 2016**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
 
 ## Overview
 ```javascript
