@@ -7,7 +7,7 @@ By default, compiling the program using ```make``` will create a binary measurin
 * Echo performance of 400 serial text messages.
 * Memory consumption per connection (you have to read it yourself).
 
-Modifying the macros, you can get this benchmark to establish 1 million connections with very little RAM usage. It connects to localhost using many addresses which you have to set up youself (along with required system configurations).
+Modifying the macros, you can get this benchmark to establish 1 million connections with very little RAM usage. It connects to localhost using many addresses which you have to set up yourself (along with required system configurations).
 
 Output looks like this for ```node-lws```:
 ```
