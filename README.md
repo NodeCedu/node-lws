@@ -1,13 +1,12 @@
 # Lightweight WebSockets for Node.js
 ```node-lws``` (or simply ```lws```) is a [libwebsockets](https://libwebsockets.org/index.html) wrapper for Node.js and C++. It exposes an easy to use interface much like the one available in [ws](https://github.com/websockets/ws). In comparison to ```ws```, significantly more concurrent connections can be established using ```node-lws``` due to the memory efficiency of ```libwebsockets```.
 
-**NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
-
-## Installing
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
 
 * Node 4.x support (ABI 46).
 * Linux ~~& Mac OS X 10.7+~~ (Mac will be supported).
+
+**NOTE:** This project started **Jan 13, 2016** and is at version **0.0.16**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
 
 ## Overview
 ```javascript
