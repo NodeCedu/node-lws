@@ -3,6 +3,7 @@
 
 * ```node-lws``` uses less than 40% the memory per connection compared to ```ws```.
 * ```node-lws``` establishes connections in less than 10% the time compared to ```ws```.
+* ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
 
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
