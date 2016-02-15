@@ -145,7 +145,11 @@ Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, 
 
 #ifdef LIBUV_BACKEND
     clws::lws_uv_sigint_cfg(context, 0, nullptr);
-    clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()), 0);
+
+    // this is a train wreck right now
+    clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()),[](uv_signal_t *handle, int signum) {
+            exit(0);
+    }, 0);
 #else
     clws::lws_ev_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND), 0);
     clws::lws_ev_sigint_cfg(context, 0, nullptr);
@@ -170,9 +174,7 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 void Server::run()
 {
 #ifdef LIBUV_BACKEND
-    while(true) {
-        uv_run((uv_loop_t *) loop, UV_RUN_ONCE);
-    }
+    uv_run((uv_loop_t *) loop, UV_RUN_DEFAULT);
 #else
     while(true) {
         ev_run(loop, EVRUN_ONCE);
