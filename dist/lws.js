@@ -1,1 +1,1 @@
-module.exports = require('./lws_' + process.platform);
+module.exports = require('./lws_' + process.platform + '_' + process.versions.modules);
