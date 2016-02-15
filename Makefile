@@ -1,5 +1,5 @@
 default:
-	for path in node_versions/*; do NODE=$$path make `(uname -s)`; done
+	for path in node_versions/*; do if [ -d $$path ]; then NODE=$$path make `(uname -s)`; fi; done
 	cp README.md dist/README.md
 	cp LICENSE dist/LICENSE
 Linux:
