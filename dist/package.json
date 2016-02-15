@@ -1,6 +1,6 @@
 {
   "name": "lws",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "scripts": {
     "build": "cd .. && make"
   },
@@ -14,5 +14,9 @@
   ],
   "homepage": "https://github.com/alexhultman/node-lws",
   "license": "Modified zlib/libpng",
-  "author": "Alex Hultman <alexhultman@gmail.com> (https://github.com/alexhultman)"
+  "author": "Alex Hultman <alexhultman@gmail.com> (https://github.com/alexhultman)",
+  "contributors": [{
+    "name": "Daniel Kleveros",
+    "email": ""
+  }]
 }

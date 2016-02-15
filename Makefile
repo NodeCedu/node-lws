@@ -5,7 +5,8 @@ default:
 Linux:
 	g++ -std=c++11 -O3 -shared -I $$NODE/include -fPIC -DLIBUV_BACKEND src/addon.cpp src/lws.cpp -l:libwebsockets.a -s -o dist/lws_linux_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
 Darwin:
-	g++ -std=c++11 -stdlib=libc++ -DLIBUV_BACKEND -mmacosx-version-min=10.7 -O3 -shared -fPIC src/addon.cpp src/lws.cpp -l:libwebsockets.a -s -o dist/lws_darwin.node
+	g++ -std=c++11 -stdlib=libc++ -mmacosx-version-min=10.7 -O3 -shared -I $$NODE/include -fPIC -DLIBUV_BACKEND src/addon.cpp src/lws.cpp -l:libwebsockets.a -s -o dist/lws_darwin_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
+
 clean:
 	rm -f dist/README.md
 	rm -f dist/LICENSE
