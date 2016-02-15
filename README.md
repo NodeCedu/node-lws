@@ -8,7 +8,7 @@
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
 
-* Node 4.x support (ABI 46).
+* Node 4.x, 5.x support (ABI 46-47).
 * Linux ~~& Mac OS X 10.7+~~ (Mac will be supported).
 
 **NOTE:** This project started **Jan 13, 2016**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
@@ -92,7 +92,6 @@ If the pre-compiled binaries don't suffice, you could compile the wrapper manual
 ```
 git clone https://github.com/warmcat/libwebsockets.git
 cd libwebsockets
-git checkout libuv-test
 cmake -DLWS_WITH_LIBUV=1 -DLWS_WITH_LIBEV=0 -DCMAKE_C_FLAGS=-fPIC -DLWS_WITHOUT_TESTAPPS=1 -DCMAKE_INSTALL_PREFIX=/usr .
 make
 sudo make install
