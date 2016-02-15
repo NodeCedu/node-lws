@@ -80,7 +80,7 @@ void on(const FunctionCallbackInfo<Value> &args)
         server->onConnection([isolate](lws::Socket socket) {
             *socket.getUser() = nullptr;
             HandleScope hs(isolate);
-            Local<Value> argv[] = {wrapSocket(&socket, isolate)};
+            Local<Value> argv[] = {wrapSocket(&socket, isolate)->Clone()};
             Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);
         });
     }
