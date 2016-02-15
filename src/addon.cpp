@@ -20,6 +20,7 @@ NODE_MODULE(lws, Main)
 
 // these could be stored in the Server object as 3 aligned pointers?
 Persistent<Function> connectionCallback, closeCallback, messageCallback;
+Persistent<Object> persistentSocket;
 
 void Main(Local<Object> exports)
 {
@@ -33,6 +34,10 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
+
+    Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
+    socketTemplate->SetInternalFieldCount(2);
+    persistentSocket.Reset(isolate, socketTemplate->NewInstance());
 }
 
 void constructor(const FunctionCallbackInfo<Value> &args)
@@ -55,11 +60,7 @@ inline Local<Object> wrapSocket(lws::Socket *socket, Isolate *isolate)
         }
     };
 
-    // this one can be shared, but is it really faster?
-    Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
-    socketTemplate->SetInternalFieldCount(2);
-
-    return ((SocketWrapper *) socket)->wrap(socketTemplate->NewInstance());
+    return ((SocketWrapper *) socket)->wrap(Local<Object>::New(isolate, persistentSocket));
 }
 
 inline lws::Socket unwrapSocket(Local<Object> object)
@@ -97,7 +98,8 @@ void on(const FunctionCallbackInfo<Value> &args)
         server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary) {
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate),
-                                   node::Buffer::New(isolate, data, length).ToLocalChecked(),
+                                   /*ArrayBuffer::New(isolate, data, length)*/
+                                   node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked(),
                                    Boolean::New(isolate, binary)};
             Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 3, argv);
         });
@@ -122,7 +124,7 @@ void send(const FunctionCallbackInfo<Value> &args)
 {
     unwrapSocket(args[0]->ToObject())
             .send(node::Buffer::Data(args[1])
-            ,node::Buffer::Length(args[1])
+            , node::Buffer::Length(args[1])
             , args[2]->BooleanValue());
 }
 
