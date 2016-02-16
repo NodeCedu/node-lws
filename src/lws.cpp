@@ -117,12 +117,12 @@ size_t Socket::getPostPadding()
     return LWS_SEND_BUFFER_POST_PADDING;
 }
 
-Server::Server(unsigned int port, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval)
+Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval)
 {
     clws::lws_set_log_level(0, nullptr);
 
     clws::lws_protocols *protocols = new clws::lws_protocols[2];
-    protocols[0] = {"default", callback, sizeof(SocketExtension)};
+    protocols[0] = {protocolName ? protocolName : "default", callback, sizeof(SocketExtension)};
     protocols[1] = {nullptr, nullptr, 0};
 
     clws::lws_context_creation_info info = {};

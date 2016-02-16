@@ -43,8 +43,20 @@ void Main(Local<Object> exports)
 void constructor(const FunctionCallbackInfo<Value> &args)
 {
     if (args.IsConstructCall()) {
-        int port = args[0]->IsUndefined() ? 0 : args[0]->NumberValue();
-        args.This()->SetAlignedPointerInInternalField(0, new lws::Server(port));
+        Local<Object> options = args[0]->ToObject();
+        int port = options->Get(String::NewFromUtf8(args.GetIsolate(), "port"))->ToInteger()->Value();
+        String::Utf8Value path(options->Get(String::NewFromUtf8(args.GetIsolate(), "path")));
+        int keepAliveTime = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveTime"))->ToInteger()->Value();
+        int keepAliveInterval = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveInterval"))->ToInteger()->Value();
+        int keepAliveRetry = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveRetry"))->ToInteger()->Value();
+
+#ifdef VERBOSE_SERVER
+        cout << "Using port = " << port << ", path = " << string(*path, path.length())
+             << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
+             << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
+#endif
+
+        args.This()->SetAlignedPointerInInternalField(0, new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval));
         args.GetReturnValue().Set(args.This());
     }
 }
