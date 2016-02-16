@@ -16,7 +16,7 @@
 ## Overview
 ```javascript
 var lws = require('lws');
-var server = new lws.Server(3000);
+var server = new lws.Server({ port: 3000 });
 
 server.on('connection', function (socket) {
     console.log('[Connection]');
