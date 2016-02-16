@@ -39,8 +39,14 @@ console.log('Running server on port 3000');
 ```
 ### Class: lws.Server
 
-#### new lws.Server(port)
-Constructs a new Server object listening to ```port```.
+#### new lws.Server(options)
+Constructs a new Server object. ```options``` is an object with these fields:
+
+* port : Integer
+* path : String
+* keepAliveTime : Integer
+* keepAliveInterval : Integer
+* keepAliveRetry : Integer
 
 #### Event: 'connection'
 ```javascript
