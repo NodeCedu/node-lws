@@ -9,9 +9,9 @@
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
 
 * Node 4.x, 5.x support (ABI 46-47).
-* Linux ~~& Mac OS X 10.7+~~ (**I'm looking for someone who can provide OS X builds, contact me in the issue tracker**)
+* Linux & Mac OS X 10.7+
 
-**NOTE:** This project started **Jan 13, 2016**. Things are nearing a somewhat not-completely-broken status but will need some more time to stabilize. Please use the issue tracker to report bugs, feature requests and other opinions.
+*NOTE:* This project started *Jan 13, 2016*. Please use the issue tracker to report bugs, feature requests and other opinions.
 
 ## Overview
 ```javascript
