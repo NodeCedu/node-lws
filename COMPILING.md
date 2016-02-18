@@ -21,7 +21,7 @@
   * ```cd node-lws```
   * ```make```
   
-You'll now have binaries in the node-lws/dist folder named: ```lws_\<platform kernel name\>_\<ABI version\>.node```
+You'll now have binaries in the node-lws/dist folder named: ```lws_<platform kernel name>_<ABI version>.node```
 * One for every Node.js (ABI) version put in node-lws/node_versions.
 
 ### Detailed information
