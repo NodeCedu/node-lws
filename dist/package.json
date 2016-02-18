@@ -1,6 +1,6 @@
 {
   "name": "lws",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "scripts": {
     "build": "cd .. && make"
   },
@@ -17,6 +17,6 @@
   "author": "Alex Hultman <alexhultman@gmail.com> (https://github.com/alexhultman)",
   "contributors": [{
     "name": "Daniel Kleveros",
-    "email": ""
+    "email": "daniel.kleveros@gmail.com"
   }]
 }
