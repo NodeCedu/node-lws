@@ -8,6 +8,10 @@
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
 
+```
+npm install --save lws
+```
+
 * Node 4.x, 5.x support (ABI 46-47).
 * Linux & Mac OS X 10.7+
 
@@ -70,13 +74,22 @@ function (socket) { }
 Emitted when a connection has been closed. Data set with ```setUserData``` is valid until this callback goes out of scope.
 
 #### setUserData(socket, data)
+```javascript
+server.setUserData(socket, 'string');
+```
 
 Used to set persistent private data on ```socket```. Currently the type is string, meaning you can store objects as JSON.
 
 #### getUserData(socket)
+```javascript
+server.getUserData(socket);
+```
 
 Returns the private persistent data set on ```socket```.
 
-### send(message, binary)
+### send(socket, message, binary)
+```javascript
+server.send(socket, buffer, false);
+```
 
 Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
