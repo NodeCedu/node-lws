@@ -15,12 +15,6 @@
   "homepage": "https://github.com/alexhultman/node-lws",
   "license": "Modified zlib/libpng",
   "author": "Alex Hultman <alexhultman@gmail.com> (https://github.com/alexhultman)",
-  "contributors": [
-    {
-      "name": "Daniel Kleveros",
-      "email": "daniel.kleveros@gmail.com"
-    }
-  ],
   "repository": {
     "type": "git",
     "url": "http://github.com/alexhultman/node-lws.git"
