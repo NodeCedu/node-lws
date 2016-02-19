@@ -20,5 +20,9 @@
       "name": "Daniel Kleveros",
       "email": "daniel.kleveros@gmail.com"
     }
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/alexhultman/node-lws.git"
+  }
 }
