@@ -40,6 +40,21 @@ void Main(Local<Object> exports)
     persistentSocket.Reset(isolate, socketTemplate->NewInstance());
 }
 
+string camelCaseToUnderscore(string camelCase)
+{
+    string underscore;
+    for (char c : camelCase) {
+        if (isupper(c)) {
+            underscore += "_";
+            underscore += tolower(c);
+        }
+        else {
+            underscore += c;
+        }
+    }
+    return underscore;
+}
+
 void constructor(const FunctionCallbackInfo<Value> &args)
 {
     if (args.IsConstructCall()) {
@@ -49,17 +64,43 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         int keepAliveTime = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveTime"))->ToInteger()->Value();
         int keepAliveInterval = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveInterval"))->ToInteger()->Value();
         int keepAliveRetry = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveRetry"))->ToInteger()->Value();
-        int perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"))->ToBoolean()->Value();
+
+        MaybeLocal<Value> perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"));
+        bool usePerMessageDeflate = true;
+        static string strPerMessageDeflate = "permessage-deflate";
+        if (perMessageDeflate.ToLocalChecked()->IsObject()) {
+            Local<Array> propertyNames = perMessageDeflate.ToLocalChecked()->ToObject()->GetPropertyNames();
+            for (int i = 0; i < propertyNames->Length(); i++) {
+                String::Utf8Value keyName(propertyNames->Get(i));
+                MaybeLocal<Value> optionalValue = perMessageDeflate.ToLocalChecked()->ToObject()->Get(propertyNames->Get(i));
+                if (!(optionalValue.ToLocalChecked()->IsBoolean() && !optionalValue.ToLocalChecked()->BooleanValue())) {
+                    strPerMessageDeflate += "; " + camelCaseToUnderscore(string(*keyName, keyName.length()));
+
+                    if (!optionalValue.IsEmpty() && !optionalValue.ToLocalChecked()->IsBoolean()) {
+                        String::Utf8Value valueString(optionalValue.ToLocalChecked()->ToString());
+                        strPerMessageDeflate += "=" + string(*valueString, valueString.length());
+                    }
+                }
+            }
+        }
+        else if(perMessageDeflate.ToLocalChecked()->IsBoolean()) {
+            usePerMessageDeflate = perMessageDeflate.ToLocalChecked()->BooleanValue();
+        }
 
 #ifdef VERBOSE_SERVER
         cout << "Using port = " << port << ", path = " << string(*path, path.length())
              << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
              << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
+
+        if (usePerMessageDeflate) {
+            cout << "Using perMessageDeflate:" << endl << strPerMessageDeflate << endl;
+        }
 #endif
 
         lws::Server *server;
         try {
-            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval, perMessageDeflate);
+            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry,
+                                     keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str());
         }
         catch (...) {
             server = nullptr;
