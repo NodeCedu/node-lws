@@ -1,6 +1,10 @@
 var lws = require('lws');
 var server = new lws.Server({ port: 3000 });
 
+server.on('error', function (error) {
+    console.log('Could not start server!');
+});
+
 server.on('connection', function (socket) {
     console.log('[Connection]');
     server.send(socket, new Buffer('a text message'), false);

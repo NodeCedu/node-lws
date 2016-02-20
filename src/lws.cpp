@@ -140,7 +140,7 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     info.ka_interval = ka_interval;
 
     if (!(context = clws::lws_create_context(&info))) {
-        throw;
+        throw nullptr;
     }
 
 #ifdef LIBUV_BACKEND

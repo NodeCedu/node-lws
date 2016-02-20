@@ -56,7 +56,15 @@ void constructor(const FunctionCallbackInfo<Value> &args)
              << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
 #endif
 
-        args.This()->SetAlignedPointerInInternalField(0, new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval));
+        lws::Server *server;
+        try {
+            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval);
+        }
+        catch (...) {
+            server = nullptr;
+        }
+
+        args.This()->SetAlignedPointerInInternalField(0, server);
         args.GetReturnValue().Set(args.This());
     }
 }
@@ -87,7 +95,10 @@ void on(const FunctionCallbackInfo<Value> &args)
     Isolate *isolate = args.GetIsolate();
 
     String::Utf8Value eventName(args[0]->ToString());
-    if (!strncmp(*eventName, "connection", eventName.length())) {
+    if (!strncmp(*eventName, "error", eventName.length()) && !server) {
+        Local<Function>::Cast(args[1])->Call(Null(isolate), 0, nullptr);
+    }
+    else if (server && !strncmp(*eventName, "connection", eventName.length())) {
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onConnection([isolate](lws::Socket socket) {
             *socket.getUser() = nullptr;
@@ -96,7 +107,7 @@ void on(const FunctionCallbackInfo<Value> &args)
             Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);
         });
     }
-    else if (!strncmp(*eventName, "close", eventName.length())) {
+    else if (server && !strncmp(*eventName, "close", eventName.length())) {
         closeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onDisconnection([isolate](lws::Socket socket) {
             HandleScope hs(isolate);
@@ -105,7 +116,7 @@ void on(const FunctionCallbackInfo<Value> &args)
             delete ((string *) *socket.getUser());
         });
     }
-    else if (!strncmp(*eventName, "message", eventName.length())) {
+    else if (server && !strncmp(*eventName, "message", eventName.length())) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary) {
             HandleScope hs(isolate);
