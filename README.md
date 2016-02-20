@@ -22,6 +22,10 @@ npm install --save lws
 var lws = require('lws');
 var server = new lws.Server({ port: 3000 });
 
+server.on('error', function (error) {
+    console.log('Oops!');
+});
+
 server.on('connection', function (socket) {
     console.log('[Connection]');
     server.send(socket, new Buffer('a text message'), false);
@@ -51,6 +55,12 @@ Constructs a new Server object. ```options``` is an object with these fields:
 * keepAliveTime : Integer
 * keepAliveInterval : Integer
 * keepAliveRetry : Integer
+* perMessageDeflate : Boolean | Object
+  * serverNoContextTakeover : Boolean
+  * clientNoContextTakeover : Boolean
+  * serverMaxWindowBits : Integer
+  * clientMaxWindowBits : Integer
+  * memLevel : Integer
 
 #### Event: 'connection'
 ```javascript
@@ -58,6 +68,12 @@ function (socket) { }
 ```
 
 Emitted when a connection has been established. ```socket``` is a *copy* of the internal socket structure. Changes made to this copy does not persist - use ```setUserData``` to set persistent data on a ```socket```.
+
+#### Event: 'error'
+```javascript
+function (error) { }
+```
+Emitted when a server error has been raised. ```error``` argument is reserved for future extension and is currently always ```undefined```.
 
 #### Event: 'message'
 ```javascript
