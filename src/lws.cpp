@@ -140,6 +140,7 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     info.ka_interval = ka_interval;
 
     if (!(context = clws::lws_create_context(&info))) {
+        delete [] protocols;
         throw nullptr;
     }
 
