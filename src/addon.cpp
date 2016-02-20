@@ -49,6 +49,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         int keepAliveTime = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveTime"))->ToInteger()->Value();
         int keepAliveInterval = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveInterval"))->ToInteger()->Value();
         int keepAliveRetry = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveRetry"))->ToInteger()->Value();
+        int perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"))->ToBoolean()->Value();
 
 #ifdef VERBOSE_SERVER
         cout << "Using port = " << port << ", path = " << string(*path, path.length())
@@ -58,7 +59,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
 
         lws::Server *server;
         try {
-            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval);
+            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry, keepAliveInterval, perMessageDeflate);
         }
         catch (...) {
             server = nullptr;

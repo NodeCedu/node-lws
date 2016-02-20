@@ -120,7 +120,7 @@ size_t Socket::getPostPadding()
     return LWS_SEND_BUFFER_POST_PADDING;
 }
 
-Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval)
+Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate)
 {
     clws::lws_set_log_level(0, nullptr);
 
@@ -128,9 +128,19 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     protocols[0] = {protocolName ? protocolName : "default", callback, sizeof(SocketExtension)};
     protocols[1] = {nullptr, nullptr, 0};
 
+    clws::lws_extension *extensions = new clws::lws_extension[2];
+    memset(extensions, 0, sizeof(clws::lws_extension) * 2);
+
+    // todo: support options
+    if (perMessageDeflate) {
+        extensions[0] = {"permessage-deflate", clws::lws_extension_callback_pm_deflate, "permessage-deflate"};
+        extensions[1] = {nullptr, nullptr, 0};
+    }
+
     clws::lws_context_creation_info info = {};
     info.port = port;
     info.protocols = protocols;
+    info.extensions = extensions;
     info.gid = info.uid = -1;
     info.user = &internals;
 #ifdef LIBUV_BACKEND
@@ -144,6 +154,7 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
 
     if (!(context = clws::lws_create_context(&info))) {
         delete [] protocols;
+        delete [] extensions;
         throw nullptr;
     }
 

@@ -63,7 +63,7 @@ private:
     clws::lws_context *context;
     ServerInternals internals;
 public:
-    Server(unsigned int port, const char *protocolName = nullptr, unsigned int ka_time = 0, unsigned int ka_probes = 0, unsigned int ka_interval = 0);
+    Server(unsigned int port, const char *protocolName = nullptr, unsigned int ka_time = 0, unsigned int ka_probes = 0, unsigned int ka_interval = 0, bool perMessageDeflate = true);
     void onConnection(std::function<void(Socket)> connectionCallback);
     void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
