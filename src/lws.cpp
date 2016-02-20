@@ -38,12 +38,15 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     switch (reason) {
     case clws::LWS_CALLBACK_SERVER_WRITEABLE:
     {
-        SocketExtension::Message &message = ext->messages.front();
-        lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
-        if (message.owned) {
-            delete [] message.buffer;
-        }
-        ext->messages.pop();
+        do {
+            SocketExtension::Message &message = ext->messages.front();
+            lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
+            if (message.owned) {
+                delete [] message.buffer;
+            }
+            ext->messages.pop();
+        } while(!ext->messages.empty() && !lws_partial_buffered(wsi));
+
         if (!ext->messages.empty()) {
             lws_callback_on_writable(wsi);
         }
