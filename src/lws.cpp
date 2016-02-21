@@ -56,7 +56,9 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
         new (&ext->messages) queue<SocketExtension::Message>;
-        serverInternals->connectionCallback({wsi, ext});
+        if (serverInternals->connectionCallback) {
+            serverInternals->connectionCallback({wsi, ext});
+        }
         break;
     }
 
@@ -68,13 +70,17 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         }
         ext->messages.~queue<SocketExtension::Message>();
 
-        serverInternals->disconnectionCallback({wsi, ext});
+        if (serverInternals->disconnectionCallback) {
+            serverInternals->disconnectionCallback({wsi, ext});
+        }
         break;
     }
 
     case clws::LWS_CALLBACK_RECEIVE:
     {
-        serverInternals->messageCallback({wsi, ext}, (char *) in, len, lws_frame_is_binary(wsi));
+        if (serverInternals->messageCallback) {
+            serverInternals->messageCallback({wsi, ext}, (char *) in, len, lws_frame_is_binary(wsi));
+        }
         break;
     }
     default:
