@@ -15,7 +15,7 @@ npm install --save lws
 * Node 4.x, 5.x support (ABI 46-47).
 * Linux & Mac OS X 10.7+
 
-*NOTE:* This project started *Jan 13, 2016*. Please use the issue tracker to report bugs, feature requests and other opinions.
+NOTE: This project started Jan 13, 2016. Please use the issue tracker to report bugs, feature requests and other opinions. Also, there might be short periods of time where the (npm) published version is behind the version on GitHub.
 
 ## Overview
 ```javascript
