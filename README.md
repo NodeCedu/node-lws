@@ -61,6 +61,12 @@ Constructs a new Server object. ```options``` is an object with these fields:
   * serverMaxWindowBits : Integer
   * clientMaxWindowBits : Integer
   * memLevel : Integer
+* ssl : Object
+  * key : String (path)
+  * cert : String (path)
+  * ca : String (path)
+  * ciphers : String
+  * rejectUnauthorized : Boolean
 
 #### Event: 'connection'
 ```javascript
