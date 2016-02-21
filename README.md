@@ -104,12 +104,19 @@ Used to set persistent private data on ```socket```. Currently the type is strin
 
 #### getUserData(socket)
 ```javascript
-server.getUserData(socket);
+var string = server.getUserData(socket);
 ```
 
 Returns the private persistent data set on ```socket```.
 
-### send(socket, message, binary)
+#### getFd(socket)
+```javascript
+var fd = server.getFd(socket);
+```
+
+Returns the underlying file descriptor of the socket. This can be used to bind custom data to your socket more efficiently than through ```getUserData``` and ```setUserData```. Instead of working with strings, you can use this integer value to navigate in pre-allocated vectors of \<insert your data type\>.
+
+#### send(socket, message, binary)
 ```javascript
 server.send(socket, buffer, false);
 ```
