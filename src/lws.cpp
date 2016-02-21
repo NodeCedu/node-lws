@@ -126,6 +126,11 @@ size_t Socket::getPostPadding()
     return LWS_SEND_BUFFER_POST_PADDING;
 }
 
+int Socket::getFd()
+{
+    return clws::lws_get_socket_fd(wsi);
+}
+
 Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate,
                const char *perMessageDeflateOptions, const char *certPath, const char *keyPath, const char *caPath, const char *ciphers, bool rejectUnauthorized)
 {

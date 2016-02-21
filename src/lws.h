@@ -37,6 +37,7 @@ public:
     void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
     size_t getPrePadding();
     size_t getPostPadding();
+    int getFd();
     void **getUser()
     {
         return &((SocketExtension *) extension)->user;
