@@ -120,7 +120,8 @@ size_t Socket::getPostPadding()
     return LWS_SEND_BUFFER_POST_PADDING;
 }
 
-Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate, const char *perMessageDeflateOptions)
+Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate,
+               const char *perMessageDeflateOptions, const char *certPath, const char *keyPath, const char *caPath, const char *ciphers, bool rejectUnauthorized)
 {
     clws::lws_set_log_level(0, nullptr);
 
@@ -137,14 +138,24 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
 
     clws::lws_context_creation_info info = {};
     info.port = port;
+
+    info.ssl_cert_filepath = certPath;
+    info.ssl_private_key_filepath = keyPath;
+    info.ssl_ca_filepath = caPath;
+    info.ssl_cipher_list = ciphers;
+    if (!rejectUnauthorized) {
+        info.options |= clws::LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
+    }
+
     info.protocols = protocols;
     info.extensions = extensions;
+
     info.gid = info.uid = -1;
     info.user = &internals;
 #ifdef LIBUV_BACKEND
-    info.options = clws::LWS_SERVER_OPTION_LIBUV;
+    info.options |= clws::LWS_SERVER_OPTION_LIBUV;
 #else
-    info.options = clws::LWS_SERVER_OPTION_LIBEV;
+    info.options |= clws::LWS_SERVER_OPTION_LIBEV;
 #endif
     info.ka_time = ka_time;
     info.ka_probes = ka_probes;

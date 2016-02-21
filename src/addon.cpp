@@ -40,6 +40,7 @@ void Main(Local<Object> exports)
     persistentSocket.Reset(isolate, socketTemplate->NewInstance());
 }
 
+// helpers
 string camelCaseToUnderscore(string camelCase)
 {
     string underscore;
@@ -53,6 +54,12 @@ string camelCaseToUnderscore(string camelCase)
         }
     }
     return underscore;
+}
+
+string getString(Isolate *isolate, Local<Object> object, const char *key)
+{
+    String::Utf8Value v8String(object->Get(String::NewFromUtf8(isolate, key)));
+    return string(*v8String, v8String.length());
 }
 
 void constructor(const FunctionCallbackInfo<Value> &args)
@@ -87,6 +94,18 @@ void constructor(const FunctionCallbackInfo<Value> &args)
             usePerMessageDeflate = perMessageDeflate.ToLocalChecked()->BooleanValue();
         }
 
+        MaybeLocal<Value> ssl = options->Get(String::NewFromUtf8(args.GetIsolate(), "ssl"));
+        static string certPath, keyPath, caPath, ciphers;
+        static bool rejectUnauthorized = true;
+        if (!ssl.IsEmpty()) {
+            Local<Object> sslOptions = ssl.ToLocalChecked()->ToObject();
+            certPath = getString(args.GetIsolate(), sslOptions, "cert");
+            keyPath = getString(args.GetIsolate(), sslOptions, "key");
+            caPath = getString(args.GetIsolate(), sslOptions, "ca");
+            ciphers = getString(args.GetIsolate(), sslOptions, "ciphers");
+            rejectUnauthorized = sslOptions->Get(String::NewFromUtf8(args.GetIsolate(), "rejectUnauthorized"))->BooleanValue();
+        }
+
 #ifdef VERBOSE_SERVER
         cout << "Using port = " << port << ", path = " << string(*path, path.length())
              << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
@@ -100,7 +119,8 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         lws::Server *server;
         try {
             server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry,
-                                     keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str());
+                                     keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str(),
+                                     certPath.c_str(), keyPath.c_str(), caPath.c_str(), ciphers.c_str(), rejectUnauthorized);
         }
         catch (...) {
             server = nullptr;
