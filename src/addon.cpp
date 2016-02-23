@@ -58,25 +58,65 @@ string camelCaseToUnderscore(string camelCase)
     return underscore;
 }
 
-string getString(Isolate *isolate, Local<Object> object, const char *key)
+string getString(Isolate *isolate, Local<Object> &object, const char *key)
 {
-    String::Utf8Value v8String(object->Get(String::NewFromUtf8(isolate, key)));
-    return string(*v8String, v8String.length());
+    Local<String> v8Key = String::NewFromUtf8(isolate, key);
+    if (object->Has(v8Key)) {
+        String::Utf8Value v8String(object->Get(v8Key));
+        return string(*v8String, v8String.length());
+    }
+    return "";
+}
+
+int getInt(Isolate *isolate, Local<Object> &object, const char *key)
+{
+    Local<String> v8Key = String::NewFromUtf8(isolate, key);
+    if (object->Has(v8Key)) {
+        return object->Get(v8Key)->ToInteger()->Value();
+    }
+    return 0;
+}
+
+bool getObject(Isolate *isolate, Local<Object> &object, const char *key, Local<Object> &output)
+{
+    Local<String> v8Key = String::NewFromUtf8(isolate, key);
+    if (object->Has(v8Key)) {
+        output = object->Get(v8Key)->ToObject();
+        return true;
+    }
+    return false;
+}
+
+bool getBool(Isolate *isolate, Local<Object> &object, const char *key, bool &output)
+{
+    Local<String> v8Key = String::NewFromUtf8(isolate, key);
+    if (object->Has(v8Key)) {
+        object->Get(v8Key)->BooleanValue();
+    }
+    return false;
+}
+
+const char *nullOrC(string &str)
+{
+    if (str.length()) {
+        return str.c_str();
+    }
+    return nullptr;
 }
 
 void constructor(const FunctionCallbackInfo<Value> &args)
 {
     if (args.IsConstructCall()) {
         Local<Object> options = args[0]->ToObject();
-        int port = options->Get(String::NewFromUtf8(args.GetIsolate(), "port"))->ToInteger()->Value();
-        String::Utf8Value path(options->Get(String::NewFromUtf8(args.GetIsolate(), "path")));
-        int keepAliveTime = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveTime"))->ToInteger()->Value();
-        int keepAliveInterval = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveInterval"))->ToInteger()->Value();
-        int keepAliveRetry = options->Get(String::NewFromUtf8(args.GetIsolate(), "keepAliveRetry"))->ToInteger()->Value();
+        int port = getInt(args.GetIsolate(), options, "port");
+        string path = getString(args.GetIsolate(), options, "path");
+        int keepAliveTime = getInt(args.GetIsolate(), options, "keepAliveTime");
+        int keepAliveInterval = getInt(args.GetIsolate(), options, "keepAliveInterval");
+        int keepAliveRetry = getInt(args.GetIsolate(), options, "keepAliveRetry");
 
-        MaybeLocal<Value> perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"));
         bool usePerMessageDeflate = true;
         static string strPerMessageDeflate = "permessage-deflate";
+        MaybeLocal<Value> perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"));
         if (perMessageDeflate.ToLocalChecked()->IsObject()) {
             Local<Array> propertyNames = perMessageDeflate.ToLocalChecked()->ToObject()->GetPropertyNames();
             for (int i = 0; i < propertyNames->Length(); i++) {
@@ -96,20 +136,24 @@ void constructor(const FunctionCallbackInfo<Value> &args)
             usePerMessageDeflate = perMessageDeflate.ToLocalChecked()->BooleanValue();
         }
 
-        MaybeLocal<Value> ssl = options->Get(String::NewFromUtf8(args.GetIsolate(), "ssl"));
         static string certPath, keyPath, caPath, ciphers;
         static bool rejectUnauthorized = true;
-        if (!ssl.IsEmpty()) {
-            Local<Object> sslOptions = ssl.ToLocalChecked()->ToObject();
+        Local<Object> sslOptions;
+        if (getObject(args.GetIsolate(), options, "ssl", sslOptions)) {
             certPath = getString(args.GetIsolate(), sslOptions, "cert");
             keyPath = getString(args.GetIsolate(), sslOptions, "key");
             caPath = getString(args.GetIsolate(), sslOptions, "ca");
             ciphers = getString(args.GetIsolate(), sslOptions, "ciphers");
-            rejectUnauthorized = sslOptions->Get(String::NewFromUtf8(args.GetIsolate(), "rejectUnauthorized"))->BooleanValue();
+            getBool(args.GetIsolate(), sslOptions, "rejectUnauthorized", rejectUnauthorized);
+
+#ifdef VERBOSE_SERVER
+            cout << "SSL options: cert: " << certPath << ", key: " << keyPath << ", ca: " << caPath << caPath
+                 << ", ciphers: " << ciphers << ", rejectUnauthorized: " << rejectUnauthorized << endl;
+#endif
         }
 
 #ifdef VERBOSE_SERVER
-        cout << "Using port = " << port << ", path = " << string(*path, path.length())
+        cout << "Using port = " << port << ", path = " << path
              << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
              << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
 
@@ -120,9 +164,9 @@ void constructor(const FunctionCallbackInfo<Value> &args)
 
         lws::Server *server;
         try {
-            server = new lws::Server(port, string(*path, path.length()).c_str(), keepAliveTime, keepAliveRetry,
+            server = new lws::Server(port, nullOrC(path), keepAliveTime, keepAliveRetry,
                                      keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str(),
-                                     certPath.c_str(), keyPath.c_str(), caPath.c_str(), ciphers.c_str(), rejectUnauthorized);
+                                     nullOrC(certPath), nullOrC(keyPath), nullOrC(caPath), nullOrC(ciphers), rejectUnauthorized);
         }
         catch (...) {
             server = nullptr;
