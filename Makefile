@@ -14,7 +14,7 @@ Linux:
 	rm -f *.o
 Darwin:
 	gcc -mmacosx-version-min=10.7 $(C_FLAGS) -I $$NODE/include/node
-	g++ -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(CPP_FLAGS) -I $$NODE/include/node `(ls *.o | tr '\n' ' ')` -s -o dist/lws_darwin_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
+	g++ -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(CPP_FLAGS) -I $$NODE/include/node `(ls *.o | tr '\n' ' ')` -o dist/lws_darwin_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
 	rm -f *.o
 clean:
 	rm -f dist/README.md
