@@ -6,6 +6,8 @@ CPP_FLAGS := -std=c++11 -O3 -shared -fPIC -DLIBUV_BACKEND $(CPP_FILES)
 
 default:
 	for path in node_versions/*; do if [ -d $$path ]; then NODE=$$path make `(uname -s)`; fi; done
+	cp README.md dist/README.md
+	cp LICENSE dist/LICENSE
 Linux:
 	gcc $(C_FLAGS) -I $$NODE/include/node
 	g++ $(CPP_FLAGS) -I $$NODE/include/node `(ls *.o -1 | tr '\n' ' ')` -s -o dist/lws_linux_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
