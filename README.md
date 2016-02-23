@@ -97,17 +97,17 @@ Emitted when a connection has been closed. Data set with ```setUserData``` is va
 
 #### setUserData(socket, data)
 ```javascript
-server.setUserData(socket, 'string');
+server.setUserData(socket, object);
 ```
 
-Used to set persistent private data on ```socket```. Currently the type is string, meaning you can store objects as JSON.
+Used to set persistent data on ```socket```. If you pass an object or string as data, only the reference will be copied.
 
 #### getUserData(socket)
 ```javascript
-var string = server.getUserData(socket);
+var object = server.getUserData(socket);
 ```
 
-Returns the private persistent data set on ```socket```.
+Returns a reference to the object, string or value set on ```socket``` using ```setUserData```.
 
 #### getFd(socket)
 ```javascript
