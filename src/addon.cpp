@@ -80,7 +80,7 @@ int getInt(Isolate *isolate, Local<Object> &object, const char *key)
 bool getObject(Isolate *isolate, Local<Object> &object, const char *key, Local<Object> &output)
 {
     Local<String> v8Key = String::NewFromUtf8(isolate, key);
-    if (object->Has(v8Key)) {
+    if (object->Has(v8Key) && object->Get(v8Key)->IsObject()) {
         output = object->Get(v8Key)->ToObject();
         return true;
     }
@@ -90,8 +90,8 @@ bool getObject(Isolate *isolate, Local<Object> &object, const char *key, Local<O
 bool getBool(Isolate *isolate, Local<Object> &object, const char *key, bool &output)
 {
     Local<String> v8Key = String::NewFromUtf8(isolate, key);
-    if (object->Has(v8Key)) {
-        object->Get(v8Key)->BooleanValue();
+    if (object->Has(v8Key) && object->Get(v8Key)->IsBoolean()) {
+        output = object->Get(v8Key)->BooleanValue();
     }
     return false;
 }
@@ -114,26 +114,40 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         int keepAliveInterval = getInt(args.GetIsolate(), options, "keepAliveInterval");
         int keepAliveRetry = getInt(args.GetIsolate(), options, "keepAliveRetry");
 
+#ifdef VERBOSE_SERVER
+        cout << "Using port = " << port << ", path = " << path
+             << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
+             << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
+#endif
+
         bool usePerMessageDeflate = true;
         static string strPerMessageDeflate = "permessage-deflate";
-        MaybeLocal<Value> perMessageDeflate = options->Get(String::NewFromUtf8(args.GetIsolate(), "perMessageDeflate"));
-        if (perMessageDeflate.ToLocalChecked()->IsObject()) {
-            Local<Array> propertyNames = perMessageDeflate.ToLocalChecked()->ToObject()->GetPropertyNames();
+        Local<Object> perMessageDeflate;
+        if (getObject(args.GetIsolate(), options, "perMessageDeflate", perMessageDeflate)) {
+            Local<Array> propertyNames = perMessageDeflate->GetPropertyNames();
             for (int i = 0; i < propertyNames->Length(); i++) {
-                String::Utf8Value keyName(propertyNames->Get(i));
-                MaybeLocal<Value> optionalValue = perMessageDeflate.ToLocalChecked()->ToObject()->Get(propertyNames->Get(i));
-                if (!(optionalValue.ToLocalChecked()->IsBoolean() && !optionalValue.ToLocalChecked()->BooleanValue())) {
-                    strPerMessageDeflate += "; " + camelCaseToUnderscore(string(*keyName, keyName.length()));
+                String::Utf8Value propertyName(propertyNames->Get(i));
+                Local<Value> propertyValue = perMessageDeflate->Get(propertyNames->Get(i));
+                if (!(propertyValue->IsBoolean() && !propertyValue->BooleanValue())) {
+                    strPerMessageDeflate += "; " + camelCaseToUnderscore(string(*propertyName, propertyName.length()));
 
-                    if (!optionalValue.IsEmpty() && !optionalValue.ToLocalChecked()->IsBoolean()) {
-                        String::Utf8Value valueString(optionalValue.ToLocalChecked()->ToString());
-                        strPerMessageDeflate += "=" + string(*valueString, valueString.length());
+                    if (!propertyValue->IsBoolean()) {
+                        String::Utf8Value propertyValueString(propertyValue->ToString());
+                        strPerMessageDeflate += "=" + string(*propertyValueString, propertyValueString.length());
                     }
                 }
             }
+
+#ifdef VERBOSE_SERVER
+            cout << "Using perMessageDeflate:" << endl << strPerMessageDeflate << endl;
+#endif
         }
-        else if(perMessageDeflate.ToLocalChecked()->IsBoolean()) {
-            usePerMessageDeflate = perMessageDeflate.ToLocalChecked()->BooleanValue();
+        else {
+            getBool(args.GetIsolate(), options, "perMessageDeflate", usePerMessageDeflate);
+
+#ifdef VERBOSE_SERVER
+            cout << "Passed perMessageDeflate was boolean: " << usePerMessageDeflate << endl;
+#endif
         }
 
         static string certPath, keyPath, caPath, ciphers;
@@ -151,16 +165,6 @@ void constructor(const FunctionCallbackInfo<Value> &args)
                  << ", ciphers: " << ciphers << ", rejectUnauthorized: " << rejectUnauthorized << endl;
 #endif
         }
-
-#ifdef VERBOSE_SERVER
-        cout << "Using port = " << port << ", path = " << path
-             << ", keepAliveTime = " << keepAliveTime << ", keepAliveInterval = "
-             << keepAliveInterval << ", keepAliveRetry = " << keepAliveRetry << endl;
-
-        if (usePerMessageDeflate) {
-            cout << "Using perMessageDeflate:" << endl << strPerMessageDeflate << endl;
-        }
-#endif
 
         lws::Server *server;
         try {
