@@ -1,7 +1,7 @@
 #include "lws.h"
 
-#include <node/node.h>
-#include <node/node_buffer.h>
+#include <node.h>
+#include <node_buffer.h>
 #include <cstring>
 #include <iostream>
 #include <future>
