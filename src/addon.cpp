@@ -225,7 +225,7 @@ void on(const FunctionCallbackInfo<Value> &args)
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate)};
             Local<Function>::New(isolate, closeCallback)->Call(Null(isolate), 1, argv);
-            delete ((string *) *socket.getUser());
+            delete ((Persistent<Value> *) *socket.getUser());
         });
     }
     else if (server && !strncmp(*eventName, "message", eventName.length())) {
@@ -241,17 +241,21 @@ void on(const FunctionCallbackInfo<Value> &args)
     }
 }
 
-// stores strings for now
 void setUserData(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
-    *socket.getUser() = new string(*String::Utf8Value(args[1]->ToString()));
+    if (*socket.getUser()) {
+        ((Persistent<Value> *) *socket.getUser())->Reset(args.GetIsolate(), args[1]);
+    }
+    else {
+        *socket.getUser() = new Persistent<Value>(args.GetIsolate(), args[1]);
+    }
 }
 
 void getUserData(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
-    args.GetReturnValue().Set(String::NewFromUtf8(args.GetIsolate(), ((string *) *socket.getUser())->c_str()));
+    args.GetReturnValue().Set(Local<Value>::New(args.GetIsolate(), *(Persistent<Value> *) *socket.getUser()));
 }
 
 void getFd(const FunctionCallbackInfo<Value> &args)
@@ -260,7 +264,6 @@ void getFd(const FunctionCallbackInfo<Value> &args)
     args.GetReturnValue().Set(Integer::NewFromUnsigned(args.GetIsolate(), socket.getFd()));
 }
 
-//Server.send(Buffer, Boolean)
 void send(const FunctionCallbackInfo<Value> &args)
 {
     unwrapSocket(args[0]->ToObject())
