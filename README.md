@@ -114,7 +114,7 @@ Returns a reference to the object, string or value set on ```socket``` using ```
 var fd = server.getFd(socket);
 ```
 
-Returns the underlying file descriptor of the socket. This can be used to bind custom data to your socket more efficiently than through ```getUserData``` and ```setUserData```. Instead of working with strings, you can use this integer value to navigate in pre-allocated vectors of \<insert your data type\>.
+Returns the underlying file descriptor of the socket. This can be used to identify ```socket``` and when storing the socket in a vector or map.
 
 #### send(socket, message, binary)
 ```javascript
