@@ -255,7 +255,9 @@ void setUserData(const FunctionCallbackInfo<Value> &args)
 void getUserData(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
-    args.GetReturnValue().Set(Local<Value>::New(args.GetIsolate(), *(Persistent<Value> *) *socket.getUser()));
+    if (*socket.getUser()) {
+        args.GetReturnValue().Set(Local<Value>::New(args.GetIsolate(), *(Persistent<Value> *) *socket.getUser()));
+    }
 }
 
 void getFd(const FunctionCallbackInfo<Value> &args)
