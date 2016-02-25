@@ -26,6 +26,15 @@ server.on('error', function (error) {
     console.log('Oops!');
 });
 
+server.on('http', function (socket, request) {
+    console.log('Got some HTTP action: ' + request);
+});
+
+server.on('upgrade', function (socket, headers) {
+    console.log('Upgrading to WebSocket!');
+    console.log(headers);
+});
+
 server.on('connection', function (socket) {
     console.log('[Connection]');
     server.send(socket, new Buffer('a text message'), false);
@@ -67,6 +76,18 @@ Constructs a new Server object. ```options``` is an object with these fields:
   * ca : String (path)
   * ciphers : String
   * rejectUnauthorized : Boolean
+
+#### Event: 'http'
+```javascript
+function (socket, request) { }
+```
+Emitted when a regular HTTP request has been received. This event is not emitted for WebSocket upgrade requests.
+
+#### Event: 'upgrade'
+```javascript
+function (socket, headers) { }
+```
+Emitted when a WebSocket upgrade request has been received. ```headers``` is an object with header names and corresponding values. Return ```true``` to filter this connection, closing it before handling the upgrade.
 
 #### Event: 'connection'
 ```javascript
