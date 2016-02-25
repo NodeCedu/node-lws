@@ -20,8 +20,8 @@ void getFd(const FunctionCallbackInfo<Value> &args);
 NODE_MODULE(lws, Main)
 
 // these could be stored in the Server object as 3 aligned pointers?
-Persistent<Function> connectionCallback, closeCallback, messageCallback;
-Persistent<Object> persistentSocket;
+Persistent<Function> connectionCallback, closeCallback, messageCallback, httpCallback, upgradeCallback;
+Persistent<Object> persistentSocket, persistentHeaders;
 
 void Main(Local<Object> exports)
 {
@@ -40,6 +40,9 @@ void Main(Local<Object> exports)
     Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
     socketTemplate->SetInternalFieldCount(2);
     persistentSocket.Reset(isolate, socketTemplate->NewInstance());
+
+    Local<ObjectTemplate> headersTemplate = ObjectTemplate::New(isolate);
+    persistentHeaders.Reset(isolate, headersTemplate->NewInstance());
 }
 
 // helpers
@@ -209,6 +212,36 @@ void on(const FunctionCallbackInfo<Value> &args)
     String::Utf8Value eventName(args[0]->ToString());
     if (!strncmp(*eventName, "error", eventName.length()) && !server) {
         Local<Function>::Cast(args[1])->Call(Null(isolate), 0, nullptr);
+    }
+    else if (server && !strncmp(*eventName, "http", eventName.length())) {
+        httpCallback.Reset(isolate, Local<Function>::Cast(args[1]));
+        server->onHttp([isolate](lws::Socket socket, char *data, size_t length) {
+            HandleScope hs(isolate);
+            Local<Value> argv[] = {wrapSocket(&socket, isolate),
+                                   node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked()};
+            Local<Function>::New(isolate, httpCallback)->Call(Null(isolate), 2, argv);
+        });
+    }
+    else if (server && !strncmp(*eventName, "upgrade", eventName.length())) {
+        upgradeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
+        server->onUpgrade([isolate](lws::Socket socket) {
+            HandleScope hs(isolate);
+
+            // optimize this! (keep const string names persistent, etc)
+            Local<Object> headersObject = Local<Object>::New(isolate, persistentHeaders);
+            int i = 0;
+            for (char *headerName, *header; headerName = socket.getHeaderName(i); i++) {
+                if (header = socket.getHeader(i)) {
+                    headersObject->Set(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1), String::NewFromUtf8(isolate, header));
+                }
+                else {
+                    headersObject->Delete(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1));
+                }
+            }
+
+            Local<Value> argv[] = {wrapSocket(&socket, isolate), headersObject};
+            Local<Function>::New(isolate, upgradeCallback)->Call(Null(isolate), 2, argv);
+        });
     }
     else if (server && !strncmp(*eventName, "connection", eventName.length())) {
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));

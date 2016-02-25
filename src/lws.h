@@ -35,6 +35,8 @@ public:
     Socket(clws::lws *wsi, void *extension);
     void send(char *data, size_t length, bool binary);
     void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
+    char *getHeader(int header);
+    char *getHeaderName(int header);
     size_t getPrePadding();
     size_t getPostPadding();
     int getFd();
@@ -48,6 +50,8 @@ class Server;
 
 struct ServerInternals {
     Server *server;
+    std::function<void(Socket)> upgradeCallback;
+    std::function<void(Socket, char *data, size_t length)> httpCallback;
     std::function<void(Socket)> connectionCallback;
     std::function<void(Socket, char *data, size_t length, bool binary)> messageCallback;
     std::function<void(Socket)> disconnectionCallback;
@@ -68,6 +72,8 @@ public:
            unsigned int ka_interval = 0, bool perMessageDeflate = true, const char *perMessageDeflateOptions = nullptr,
            const char *certPath = nullptr, const char *keyPath = nullptr, const char *caPath = nullptr,
            const char *ciphers = nullptr, bool rejectUnauthorized = true);
+    void onHttp(std::function<void(lws::Socket, char *, size_t)> httpCallback);
+    void onUpgrade(std::function<void(lws::Socket)> upgradeCallback);
     void onConnection(std::function<void(Socket)> connectionCallback);
     void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);

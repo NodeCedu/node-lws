@@ -53,6 +53,28 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         break;
     }
 
+    case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
+    {
+        if (serverInternals->upgradeCallback) {
+            serverInternals->upgradeCallback({wsi, ext});
+        }
+        break;
+    }
+
+    /*case clws::LWS_CALLBACK_FILTER_HTTP_CONNECTION:
+    {
+        cout << string((char *) in, len) << endl;
+        break;
+    }*/
+
+    case clws::LWS_CALLBACK_HTTP:
+    {
+        if (serverInternals->httpCallback) {
+            serverInternals->httpCallback({wsi, ext}, (char *) in, len);
+        }
+        break;
+    }
+
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
         new (&ext->messages) queue<SocketExtension::Message>;
@@ -114,6 +136,23 @@ void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferO
 
     // Request notification when writing is allowed
     lws_callback_on_writable(wsi);
+}
+
+char *Socket::getHeader(int header)
+{
+    static char buf[1024];
+    if (clws::lws_hdr_copy(wsi, buf, sizeof(buf), (clws::lws_token_indexes) header) < 1) {
+        return nullptr;
+    }
+    return buf;
+}
+
+char *Socket::getHeaderName(int header)
+{
+    if (header > clws::WSI_TOKEN_COUNT) {
+        return nullptr;
+    }
+    return (char *) clws::lws_token_to_string((clws::lws_token_indexes) header);
 }
 
 size_t Socket::getPrePadding()
@@ -189,6 +228,16 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     clws::lws_ev_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND), 0);
     clws::lws_ev_sigint_cfg(context, 0, nullptr);
 #endif
+}
+
+void Server::onHttp(function<void(lws::Socket, char *, size_t)> httpCallback)
+{
+    internals.httpCallback = httpCallback;
+}
+
+void Server::onUpgrade(function<void(lws::Socket)> upgradeCallback)
+{
+    internals.upgradeCallback = upgradeCallback;
 }
 
 void Server::onConnection(function<void(lws::Socket)> connectionCallback)
