@@ -53,6 +53,18 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         break;
     }
 
+    /*case clws::LWS_CALLBACK_WSI_CREATE:
+    {
+
+        break;
+    }
+
+    case clws::LWS_CALLBACK_WSI_DESTROY:
+    {
+
+        break;
+    }*/
+
     case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
     {
         if (serverInternals->upgradeCallback) {
@@ -61,17 +73,21 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         break;
     }
 
-    /*case clws::LWS_CALLBACK_FILTER_HTTP_CONNECTION:
+    case clws::LWS_CALLBACK_FILTER_HTTP_CONNECTION:
     {
-        cout << string((char *) in, len) << endl;
-        break;
-    }*/
-
-    case clws::LWS_CALLBACK_HTTP:
-    {
+        // currently we only support getting the headers and closing it
+        // wip
         if (serverInternals->httpCallback) {
             serverInternals->httpCallback({wsi, ext}, (char *) in, len);
         }
+        //returning 1 here will close it!
+        return 1;
+        break;
+    }
+
+    case clws::LWS_CALLBACK_CLOSED_HTTP:
+    {
+        //cout << "Closed http connection!" << endl;
         break;
     }
 

@@ -204,6 +204,22 @@ inline lws::Socket unwrapSocket(Local<Object> object)
                                           object->GetAlignedPointerFromInternalField(1));
 }
 
+Local<Object> generateHeaders(Isolate *isolate, lws::Socket &socket)
+{
+    // optimize this! (keep const string names persistent, etc)
+    Local<Object> headersObject = Local<Object>::New(isolate, persistentHeaders);
+    int i = 0;
+    for (char *headerName, *header; headerName = socket.getHeaderName(i); i++) {
+        if (header = socket.getHeader(i)) {
+            headersObject->Set(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1), String::NewFromUtf8(isolate, header));
+        }
+        else {
+            headersObject->Delete(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1));
+        }
+    }
+    return headersObject;
+}
+
 void on(const FunctionCallbackInfo<Value> &args)
 {
     lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
@@ -218,28 +234,16 @@ void on(const FunctionCallbackInfo<Value> &args)
         server->onHttp([isolate](lws::Socket socket, char *data, size_t length) {
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate),
-                                   node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked()};
-            Local<Function>::New(isolate, httpCallback)->Call(Null(isolate), 2, argv);
+                                   node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked(),
+                                   generateHeaders(isolate, socket)};
+            Local<Function>::New(isolate, httpCallback)->Call(Null(isolate), 3, argv);
         });
     }
     else if (server && !strncmp(*eventName, "upgrade", eventName.length())) {
         upgradeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onUpgrade([isolate](lws::Socket socket) {
             HandleScope hs(isolate);
-
-            // optimize this! (keep const string names persistent, etc)
-            Local<Object> headersObject = Local<Object>::New(isolate, persistentHeaders);
-            int i = 0;
-            for (char *headerName, *header; headerName = socket.getHeaderName(i); i++) {
-                if (header = socket.getHeader(i)) {
-                    headersObject->Set(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1), String::NewFromUtf8(isolate, header));
-                }
-                else {
-                    headersObject->Delete(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1));
-                }
-            }
-
-            Local<Value> argv[] = {wrapSocket(&socket, isolate), headersObject};
+            Local<Value> argv[] = {wrapSocket(&socket, isolate), generateHeaders(isolate, socket)};
             Local<Function>::New(isolate, upgradeCallback)->Call(Null(isolate), 2, argv);
         });
     }
