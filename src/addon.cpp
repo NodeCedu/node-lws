@@ -17,6 +17,7 @@ void setUserData(const FunctionCallbackInfo<Value> &args);
 void getUserData(const FunctionCallbackInfo<Value> &args);
 void getFd(const FunctionCallbackInfo<Value> &args);
 void adoptSocket(const FunctionCallbackInfo<Value> &args);
+void dupSocket(const FunctionCallbackInfo<Value> &args);
 
 NODE_MODULE(lws, Main)
 
@@ -36,6 +37,7 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
     NODE_SET_PROTOTYPE_METHOD(tpl, "adoptSocket", adoptSocket);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "dupSocket", dupSocket);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
@@ -297,6 +299,16 @@ void getUserData(const FunctionCallbackInfo<Value> &args)
     if (*socket.getUser()) {
         args.GetReturnValue().Set(Local<Value>::New(args.GetIsolate(), *(Persistent<Value> *) *socket.getUser()));
     }
+}
+
+#include <unistd.h>
+
+void dupSocket(const FunctionCallbackInfo<Value> &args)
+{
+    int fd = args[0]->IntegerValue();
+    cout << "Dup socket, original: " << fd << endl;
+    fd = dup(fd);
+    args.GetReturnValue().Set(Integer::NewFromUnsigned(args.GetIsolate(), fd));
 }
 
 void getFd(const FunctionCallbackInfo<Value> &args)

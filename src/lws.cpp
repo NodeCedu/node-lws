@@ -273,10 +273,24 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 
 void Server::adoptSocket(size_t fd, const char *header, size_t length)
 {
+    //cout << "Original fd: " << fd << endl;
     //socket.destroy() should destroy the original socket from JS land
-    fd = clws::dup(fd);
+    //fd = clws::dup(fd);
     cout << "Adopting socket: " << fd << ", with header:" << endl << string(header, length) << endl;
-    cout << "lws: " << clws::lws_adopt_socket_readbuf(context, fd, header, length) << endl;
+
+    char buf[] = "HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+                 "Upgrade: WebSocket\r\n"
+                 "Connection: Upgrade\r\n"
+                 "\r\n";
+
+    // fake the upgrade (debug)
+    int sent = 0;
+    while (sent < sizeof(buf)) {
+        cout << "sent: " << (sent = send(fd, buf, sizeof(buf), 0)) << endl;
+    }
+
+    // this function is under testing
+    //cout << "lws: " << clws::lws_adopt_socket_readbuf(context, fd, header, length) << endl;
 }
 
 void Server::run()
