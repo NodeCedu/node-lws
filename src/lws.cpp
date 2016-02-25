@@ -271,6 +271,14 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
     internals.disconnectionCallback = disconnectionCallback;
 }
 
+void Server::adoptSocket(size_t fd, const char *header, size_t length)
+{
+    //socket.destroy() should destroy the original socket from JS land
+    fd = clws::dup(fd);
+    cout << "Adopting socket: " << fd << ", with header:" << endl << string(header, length) << endl;
+    cout << "lws: " << clws::lws_adopt_socket_readbuf(context, fd, header, length) << endl;
+}
+
 void Server::run()
 {
 #ifdef LIBUV_BACKEND

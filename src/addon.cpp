@@ -16,6 +16,7 @@ void send(const FunctionCallbackInfo<Value> &args);
 void setUserData(const FunctionCallbackInfo<Value> &args);
 void getUserData(const FunctionCallbackInfo<Value> &args);
 void getFd(const FunctionCallbackInfo<Value> &args);
+void adoptSocket(const FunctionCallbackInfo<Value> &args);
 
 NODE_MODULE(lws, Main)
 
@@ -34,6 +35,7 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "adoptSocket", adoptSocket);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
@@ -301,6 +303,14 @@ void getFd(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
     args.GetReturnValue().Set(Integer::NewFromUnsigned(args.GetIsolate(), socket.getFd()));
+}
+
+void adoptSocket(const FunctionCallbackInfo<Value> &args)
+{
+    lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
+    int fd = args[0]->IntegerValue();
+    String::Utf8Value upgradeHeader(args[1]->ToString());
+    server->adoptSocket(fd, (new string(*upgradeHeader, upgradeHeader.length()))->c_str(), upgradeHeader.length());
 }
 
 void send(const FunctionCallbackInfo<Value> &args)

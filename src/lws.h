@@ -77,6 +77,7 @@ public:
     void onConnection(std::function<void(Socket)> connectionCallback);
     void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
+    void adoptSocket(size_t fd, const char *header, size_t length);
     void run();
 #ifdef LIBUV_BACKEND
     void *getEventLoop()
