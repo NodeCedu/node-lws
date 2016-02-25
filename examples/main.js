@@ -5,6 +5,15 @@ server.on('error', function (error) {
     console.log('Could not start server!');
 });
 
+server.on('http', function (socket, request) {
+    console.log('Got some HTTP action: ' + request);
+});
+
+server.on('upgrade', function (socket, headers) {
+    console.log('Upgrading to WebSocket!');
+    console.log(headers);
+});
+
 server.on('connection', function (socket) {
     console.log('[Connection]');
     server.send(socket, new Buffer('a text message'), false);
