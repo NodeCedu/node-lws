@@ -26,10 +26,6 @@ server.on('error', function (error) {
     console.log('Oops!');
 });
 
-server.on('http', function (socket, request) {
-    console.log('Got some HTTP action: ' + request);
-});
-
 server.on('upgrade', function (socket, headers) {
     console.log('Upgrading to WebSocket!');
     console.log(headers);
