@@ -16,8 +16,7 @@ void send(const FunctionCallbackInfo<Value> &args);
 void setUserData(const FunctionCallbackInfo<Value> &args);
 void getUserData(const FunctionCallbackInfo<Value> &args);
 void getFd(const FunctionCallbackInfo<Value> &args);
-void adoptSocket(const FunctionCallbackInfo<Value> &args);
-void dupSocket(const FunctionCallbackInfo<Value> &args);
+void handleUpgrade(const FunctionCallbackInfo<Value> &args);
 
 NODE_MODULE(lws, Main)
 
@@ -36,8 +35,7 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "adoptSocket", adoptSocket);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "dupSocket", dupSocket);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
@@ -301,28 +299,29 @@ void getUserData(const FunctionCallbackInfo<Value> &args)
     }
 }
 
-#include <unistd.h>
-
-void dupSocket(const FunctionCallbackInfo<Value> &args)
-{
-    int fd = args[0]->IntegerValue();
-    cout << "Dup socket, original: " << fd << endl;
-    fd = dup(fd);
-    args.GetReturnValue().Set(Integer::NewFromUnsigned(args.GetIsolate(), fd));
-}
-
 void getFd(const FunctionCallbackInfo<Value> &args)
 {
     lws::Socket socket = unwrapSocket(args[0]->ToObject());
     args.GetReturnValue().Set(Integer::NewFromUnsigned(args.GetIsolate(), socket.getFd()));
 }
 
-void adoptSocket(const FunctionCallbackInfo<Value> &args)
+void handleUpgrade(const FunctionCallbackInfo<Value> &args)
 {
     lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
     int fd = args[0]->IntegerValue();
-    String::Utf8Value upgradeHeader(args[1]->ToString());
-    server->adoptSocket(fd, (new string(*upgradeHeader, upgradeHeader.length()))->c_str(), upgradeHeader.length());
+    String::Utf8Value upgradeKey(args[1]->ToString());
+
+    // placeholder, assumes version 13
+    static char upgradeHeader[] = "Host: host\r\n"
+                                  "Upgrade: websocket\r\n"
+                                  "Connection: Upgrade\r\n"
+                                  "Sec-WebSocket-Version: 13\r\n"
+                                  "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n"
+                                  "\r\n";
+
+    char *secKey = &upgradeHeader[sizeof(upgradeHeader) - 29];
+    memcpy(secKey, *upgradeKey, 24);
+    server->adoptSocket(fd, upgradeHeader, sizeof(upgradeHeader) - 1);
 }
 
 void send(const FunctionCallbackInfo<Value> &args)
