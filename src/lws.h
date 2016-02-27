@@ -37,8 +37,6 @@ public:
     void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
     char *getHeader(int header);
     char *getHeaderName(int header);
-    size_t getPrePadding();
-    size_t getPostPadding();
     int getFd();
     void **getUser()
     {
@@ -79,6 +77,8 @@ public:
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     void adoptSocket(size_t fd, const char *header, size_t length);
     void run();
+    static size_t getPrePadding();
+    static size_t getPostPadding();
 #ifdef LIBUV_BACKEND
     void *getEventLoop()
     {

@@ -171,12 +171,12 @@ char *Socket::getHeaderName(int header)
     return (char *) clws::lws_token_to_string((clws::lws_token_indexes) header);
 }
 
-size_t Socket::getPrePadding()
+size_t Server::getPrePadding()
 {
     return LWS_SEND_BUFFER_PRE_PADDING;
 }
 
-size_t Socket::getPostPadding()
+size_t Server::getPostPadding()
 {
     return LWS_SEND_BUFFER_POST_PADDING;
 }

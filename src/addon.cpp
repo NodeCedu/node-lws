@@ -17,6 +17,8 @@ void setUserData(const FunctionCallbackInfo<Value> &args);
 void getUserData(const FunctionCallbackInfo<Value> &args);
 void getFd(const FunctionCallbackInfo<Value> &args);
 void handleUpgrade(const FunctionCallbackInfo<Value> &args);
+void prepareBuffer(const FunctionCallbackInfo<Value> &args);
+void sendPrepared(const FunctionCallbackInfo<Value> &args);
 
 NODE_MODULE(lws, Main)
 
@@ -36,6 +38,8 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
     NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "prepareBuffer", prepareBuffer);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "sendPrepared", sendPrepared);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
@@ -345,11 +349,19 @@ void send(const FunctionCallbackInfo<Value> &args)
             , args[2]->BooleanValue());
 }
 
-// todo: zero-copy from JavaScript
-/*void sendPaddedBuffer(const FunctionCallbackInfo<Value> &args)
+void prepareBuffer(const FunctionCallbackInfo<Value> &args)
+{
+    int length = node::Buffer::Length(args[0]);
+    Local<Object> paddedBuffer = node::Buffer::New(args.GetIsolate(), lws::Server::getPrePadding() + length + lws::Server::getPostPadding()).ToLocalChecked();
+    memcpy(node::Buffer::Data(paddedBuffer) + lws::Server::getPrePadding(), node::Buffer::Data(args[0]), length);
+    args.GetReturnValue().Set(paddedBuffer);
+}
+
+void sendPrepared(const FunctionCallbackInfo<Value> &args)
 {
     unwrapSocket(args[0]->ToObject())
             .send(node::Buffer::Data(args[1])
-            ,node::Buffer::Length(args[1])
+            , node::Buffer::Length(args[1]) - lws::Server::getPrePadding() - lws::Server::getPostPadding()
+            , args[2]->BooleanValue()
             , false);
-}*/
+}
