@@ -9,6 +9,7 @@ var httpServer = http.createServer(function (request, response) {
 // note: instead of port you should specify server to get upgrade requests from
 var server = new lws.Server({ port: 4000 });
 var connections = 0;
+var preparedBuffer = server.prepareBuffer(new Buffer('Welcome!'));
 
 httpServer.on('upgrade', function (request, socket, head) {
     server.handleUpgrade(socket, request);
@@ -19,6 +20,8 @@ server.on('connection', function (socket) {
     if (connections % 1000 == 0) {
         console.log('Connections: ' + connections);
     }
+
+    server.sendPrepared(socket, preparedBuffer, false);
 });
 
 server.on('message', function (socket, message, binary) {

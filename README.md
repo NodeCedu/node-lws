@@ -144,6 +144,20 @@ server.send(socket, buffer, false);
 
 Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
 
+#### prepareBuffer(buffer)
+```javascript
+var preparedBuffer = server.prepareBuffer(buffer);
+```
+
+Prepares a Node.js Buffer for zero-copy sending. The passed buffer is copied into a larger, padded buffer which can be passed to ```sendPrepared``` for increased sending performance. Suitable when sending the same message many times, e.g. when broadcasting.
+
+#### sendPrepared(socket, message, binary)
+```javascript
+server.sendPrepared(socket, buffer, false);
+```
+
+Same as ```send``` but for prepared buffers. See ```prepareBuffer``` for details.
+
 #### handleUpgrade(socket, request, head)
 NOTE: *experimental & unstable*
 ```javascript
