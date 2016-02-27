@@ -307,9 +307,17 @@ void getFd(const FunctionCallbackInfo<Value> &args)
 
 void handleUpgrade(const FunctionCallbackInfo<Value> &args)
 {
-    lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
-    int fd = args[0]->IntegerValue();
-    String::Utf8Value upgradeKey(args[1]->ToString());
+    Isolate *isolate = args.GetIsolate();
+    Local<Object> socketObject = args[0]->ToObject();
+    Local<String> v8HandleKey = String::NewFromUtf8(isolate, "_handle");
+    Local<Object> socketHandleObject = socketObject->Get(v8HandleKey)->ToObject();
+    Local<String> v8FdKey = String::NewFromUtf8(isolate, "fd");
+    int fd = socketHandleObject->Get(v8FdKey)->IntegerValue();
+
+    Local<String> v8HeadersKey = String::NewFromUtf8(isolate, "headers");
+    Local<Object> headersObject = args[1]->ToObject()->Get(v8HeadersKey)->ToObject();
+    Local<String> v8SecKey = String::NewFromUtf8(isolate, "sec-websocket-key");
+    String::Utf8Value upgradeKey(headersObject->Get(v8SecKey));
 
     // placeholder, assumes version 13
     static char upgradeHeader[] = "Host: host\r\n"
@@ -321,7 +329,12 @@ void handleUpgrade(const FunctionCallbackInfo<Value> &args)
 
     char *secKey = &upgradeHeader[sizeof(upgradeHeader) - 29];
     memcpy(secKey, *upgradeKey, 24);
+
+    lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
     server->adoptSocket(fd, upgradeHeader, sizeof(upgradeHeader) - 1);
+
+    Local<String> v8DestroyKey = String::NewFromUtf8(isolate, "destroy");
+    Local<Function>::Cast(socketObject->Get(v8DestroyKey))->Call(socketObject, 0, nullptr);
 }
 
 void send(const FunctionCallbackInfo<Value> &args)

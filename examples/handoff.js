@@ -11,8 +11,7 @@ var server = new lws.Server({ port: 4000 });
 var connections = 0;
 
 httpServer.on('upgrade', function (request, socket, head) {
-    server.handleUpgrade(socket._handle.fd, request.headers['sec-websocket-key']);
-    socket.destroy();
+    server.handleUpgrade(socket, request);
 });
 
 server.on('connection', function (socket) {
