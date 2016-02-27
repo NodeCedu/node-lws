@@ -143,3 +143,10 @@ server.send(socket, buffer, false);
 ```
 
 Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
+
+#### handleUpgrade(socket, request, head)
+NOTE: *experimental & unstable*
+```javascript
+server.handleUpgrade(socket, request, head);
+```
+For use with the built-in ```http.Server```. Call this function from the ```http.Server 'upgrade'``` event to import and upgrade a connection. This function will trigger the 'connection' event from where the WebSocket can be obtained.
