@@ -274,7 +274,10 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 
 void Server::adoptSocket(size_t fd, const char *header, size_t length)
 {
-    clws::lws_adopt_socket_readbuf(context, clws::dup(fd), header, length);
+#ifndef dup
+#define dup clws::dup
+#endif
+    clws::lws_adopt_socket_readbuf(context, dup(fd), header, length);
 }
 
 void Server::run()
