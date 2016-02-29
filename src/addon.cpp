@@ -256,7 +256,6 @@ void on(const FunctionCallbackInfo<Value> &args)
     else if (server && !strncmp(*eventName, "connection", eventName.length())) {
         connectionCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onConnection([isolate](lws::Socket socket) {
-            *socket.getUser() = nullptr;
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate)->Clone()};
             Local<Function>::New(isolate, connectionCallback)->Call(Null(isolate), 1, argv);

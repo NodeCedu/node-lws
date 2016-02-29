@@ -67,6 +67,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
     {
+        *lws::Socket(wsi, ext).getUser() = nullptr;
         if (serverInternals->upgradeCallback) {
             serverInternals->upgradeCallback({wsi, ext});
         }
