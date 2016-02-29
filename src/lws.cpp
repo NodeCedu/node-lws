@@ -274,7 +274,7 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
 
 void Server::adoptSocket(size_t fd, const char *header, size_t length)
 {
-#ifndef dup
+#ifndef __APPLE__
 #define dup clws::dup
 #endif
     clws::lws_adopt_socket_readbuf(context, dup(fd), header, length);
