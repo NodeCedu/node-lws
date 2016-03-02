@@ -49,6 +49,7 @@ class Server;
 
 struct ServerInternals {
     Server *server;
+    Socket adoptedSocket = Socket(nullptr, nullptr);
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
     std::function<void(Socket)> connectionCallback;
@@ -76,7 +77,7 @@ public:
     void onConnection(std::function<void(Socket)> connectionCallback);
     void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
-    void adoptSocket(size_t fd, const char *header, size_t length);
+    Socket adoptSocket(size_t fd, const char *header, size_t length);
     void run();
     static size_t getPrePadding();
     static size_t getPostPadding();

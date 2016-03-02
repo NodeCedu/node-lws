@@ -336,10 +336,13 @@ void handleUpgrade(const FunctionCallbackInfo<Value> &args)
     memcpy(secKey, *upgradeKey, 24);
 
     lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
-    server->adoptSocket(fd, upgradeHeader, sizeof(upgradeHeader) - 1);
+    lws::Socket socket = server->adoptSocket(fd, upgradeHeader, sizeof(upgradeHeader) - 1);
 
     Local<String> v8DestroyKey = String::NewFromUtf8(isolate, "destroy");
     Local<Function>::Cast(socketObject->Get(v8DestroyKey))->Call(socketObject, 0, nullptr);
+
+    //if (socket)
+    args.GetReturnValue().Set(wrapSocket(&socket, isolate)->Clone());
 }
 
 void close(const FunctionCallbackInfo<Value> &args)

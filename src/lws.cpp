@@ -99,6 +99,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
         new (&ext->messages) queue<SocketExtension::Message>;
+        serverInternals->adoptedSocket = lws::Socket(wsi, ext); // check for same fd also!
         if (serverInternals->connectionCallback) {
             serverInternals->connectionCallback({wsi, ext});
         }
@@ -282,12 +283,15 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
     internals.disconnectionCallback = disconnectionCallback;
 }
 
-void Server::adoptSocket(size_t fd, const char *header, size_t length)
+Socket Server::adoptSocket(size_t fd, const char *header, size_t length) // return lws::Socket!
 {
+    internals.adoptedSocket = Socket(nullptr, nullptr);
 #ifndef __APPLE__
 #define dup clws::dup
 #endif
     clws::lws_adopt_socket_readbuf(context, dup(fd), header, length);
+
+    return internals.adoptedSocket;
 }
 
 void Server::run()
