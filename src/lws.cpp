@@ -39,6 +39,10 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_SERVER_WRITEABLE:
     {
         do {
+            // we can be called even though we have no messages ready!
+            if (ext->messages.empty())
+                break;
+
             SocketExtension::Message &message = ext->messages.front();
             lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
             if (message.owned) {
