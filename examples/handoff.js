@@ -6,8 +6,7 @@ var httpServer = http.createServer(function (request, response) {
     response.end('Well hello there!');
 });
 
-// note: instead of port you should specify server to get upgrade requests from
-var server = new lws.Server({ port: 4000 });
+var server = new lws.Server({});
 var connections = 0;
 var preparedBuffer = server.prepareBuffer(new Buffer('Welcome!'));
 
