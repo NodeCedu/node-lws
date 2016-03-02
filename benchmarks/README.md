@@ -15,7 +15,7 @@ Running ```make && ./bench2 10000 3000``` you will get results similar to these 
 
 Echo performance: 25.5599 echoes/ms
 
-Echo performance: 99.9217 echoes/ms
+Echo performance: 119.457 echoes/ms
 
 That is,
 
