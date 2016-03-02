@@ -19,6 +19,7 @@ void getFd(const FunctionCallbackInfo<Value> &args);
 void handleUpgrade(const FunctionCallbackInfo<Value> &args);
 void prepareBuffer(const FunctionCallbackInfo<Value> &args);
 void sendPrepared(const FunctionCallbackInfo<Value> &args);
+void close(const FunctionCallbackInfo<Value> &args);
 
 NODE_MODULE(lws, Main)
 
@@ -40,6 +41,7 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
     NODE_SET_PROTOTYPE_METHOD(tpl, "prepareBuffer", prepareBuffer);
     NODE_SET_PROTOTYPE_METHOD(tpl, "sendPrepared", sendPrepared);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
@@ -338,6 +340,11 @@ void handleUpgrade(const FunctionCallbackInfo<Value> &args)
 
     Local<String> v8DestroyKey = String::NewFromUtf8(isolate, "destroy");
     Local<Function>::Cast(socketObject->Get(v8DestroyKey))->Call(socketObject, 0, nullptr);
+}
+
+void close(const FunctionCallbackInfo<Value> &args)
+{
+    unwrapSocket(args[0]->ToObject()).close();
 }
 
 void send(const FunctionCallbackInfo<Value> &args)

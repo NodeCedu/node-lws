@@ -160,3 +160,9 @@ NOTE: *experimental & unstable*
 server.handleUpgrade(socket, request, head);
 ```
 For use with the built-in ```http.Server```. Call this function from the ```http.Server 'upgrade'``` event to import and upgrade a connection. This function will trigger the 'connection' event from where the WebSocket can be obtained.
+
+#### close(socket)
+```javascript
+server.close(socket);
+```
+Gracefully close the ```socket``` by shutting it down. This will trigger the 'close' event.

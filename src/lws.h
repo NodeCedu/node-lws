@@ -38,6 +38,7 @@ public:
     char *getHeader(int header);
     char *getHeaderName(int header);
     int getFd();
+    void close();
     void **getUser()
     {
         return &((SocketExtension *) extension)->user;
