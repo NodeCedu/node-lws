@@ -1,12 +1,8 @@
-var lws = require('lws');
+var lws = require('../dist/lws');
 var server = new lws.Server({ port: 3000 });
 
 server.on('error', function (error) {
     console.log('Could not start server!');
-});
-
-server.on('http', function (socket, request) {
-    console.log('Got some HTTP action: ' + request);
 });
 
 server.on('upgrade', function (socket, headers) {
