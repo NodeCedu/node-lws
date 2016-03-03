@@ -5,6 +5,8 @@
 * ```node-lws``` establishes connections in less than 10% the time compared to ```ws```.
 * ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
 
+Initial primus support should be included in 5.0 or 4.0.6. Use 'lws' as transformer & report any issues here.
+
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
 
@@ -155,11 +157,10 @@ server.sendPrepared(socket, buffer, false);
 Same as ```send``` but for prepared buffers. See ```prepareBuffer``` for details.
 
 #### handleUpgrade(socket, request, head)
-NOTE: *experimental & unstable*
 ```javascript
-server.handleUpgrade(socket, request, head);
+var webSocket = server.handleUpgrade(socket, request, head);
 ```
-For use with the built-in ```http.Server```. Call this function from the ```http.Server 'upgrade'``` event to import and upgrade a connection. This function will trigger the 'connection' event from where the WebSocket can be obtained.
+For use with the built-in ```http.Server```. Call this function from the ```http.Server 'upgrade'``` event to import and upgrade the connection. This function will return either ```undefined``` or the upgraded WebSocket. Events 'upgrade' and 'connection' will not be triggered by this call.
 
 #### close(socket)
 ```javascript
