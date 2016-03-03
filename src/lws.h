@@ -16,6 +16,7 @@ struct lws;
 
 struct SocketExtension {
     void *user;
+    bool closed;
 
     struct Message {
         bool binary;
@@ -81,6 +82,7 @@ public:
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     Socket adoptSocket(size_t fd, const char *header, size_t length);
     void run();
+    void close();
     static size_t getPrePadding();
     static size_t getPostPadding();
 #ifdef LIBUV_BACKEND

@@ -54,6 +54,12 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         if (!ext->messages.empty()) {
             lws_callback_on_writable(wsi);
         }
+        else {
+            // we are now empty and ready to close the socket
+            if (ext->closed) {
+                shutdown(clws::lws_get_socket_fd(wsi), SHUT_RDWR);
+            }
+        }
         break;
     }
 
@@ -98,6 +104,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
+        ext->closed = false;
         new (&ext->messages) queue<SocketExtension::Message>;
         if (serverInternals->adoptFd == clws::lws_get_socket_fd(wsi)) {
             serverInternals->adoptedSocket = lws::Socket(wsi);
@@ -117,7 +124,8 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         }
         ext->messages.~queue<SocketExtension::Message>();
 
-        if (serverInternals->disconnectionCallback) {
+        // ignore close events that we triggered ourselves
+        if (serverInternals->disconnectionCallback && !ext->closed) {
             serverInternals->disconnectionCallback({wsi});
         }
         break;
@@ -143,6 +151,12 @@ Socket::Socket(clws::lws *wsi) : wsi(wsi)
 
 void Socket::send(char *data, size_t length, bool binary)
 {
+    // ignore sendings on socket in closing state
+    SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
+    if (ext->closed) {
+        return;
+    }
+
     char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
     memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
     send(paddedBuffer, length, binary, true);
@@ -150,6 +164,8 @@ void Socket::send(char *data, size_t length, bool binary)
 
 void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership)
 {
+    // todo: we should also ignore sending preparedBuffers
+
     SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
     SocketExtension::Message message = {
         binary,
@@ -197,8 +213,13 @@ int Socket::getFd()
 
 void Socket::close()
 {
-    // this will trigger a close of the socket
-    shutdown(getFd(), SHUT_RDWR);
+    SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
+
+    ext->closed = true;
+
+    if (ext->messages.empty()) {
+        shutdown(getFd(), SHUT_RDWR);
+    }
 }
 
 void **Socket::getUser()
@@ -313,6 +334,22 @@ void Server::run()
         ev_run(loop, EVRUN_ONCE);
     }
 #endif
+}
+
+void Server::close()
+{
+    // ignore handling this currently, fix later on!
+    return;
+
+    // remove the close listener, we do not want to tigger it
+    internals.disconnectionCallback = [](lws::Socket s){
+
+    };
+
+    // we get hangs and valgrind hell from free(context)
+    // we cannot use context in any way from the point
+    // it has been freed!
+    clws::lws_context_destroy(context);
 }
 
 }

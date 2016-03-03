@@ -267,6 +267,8 @@ void on(const FunctionCallbackInfo<Value> &args)
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate)};
             Local<Function>::New(isolate, closeCallback)->Call(Null(isolate), 1, argv);
+
+            // move this out of here!
             delete ((Persistent<Value> *) *socket.getUser());
         });
     }
@@ -348,6 +350,12 @@ void close(const FunctionCallbackInfo<Value> &args)
 {
     if (!args.Length()) {
         // shut down the server
+        lws::Server *server = (lws::Server *) args.Holder()->GetAlignedPointerFromInternalField(0);
+        server->close();
+
+        // detach the server from this object
+        //delete server;
+        //args.Holder()->SetAlignedPointerInInternalField(0, nullptr);
     }
     else {
         // shut down the socket
