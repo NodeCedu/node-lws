@@ -341,13 +341,20 @@ void handleUpgrade(const FunctionCallbackInfo<Value> &args)
     Local<String> v8DestroyKey = String::NewFromUtf8(isolate, "destroy");
     Local<Function>::Cast(socketObject->Get(v8DestroyKey))->Call(socketObject, 0, nullptr);
 
-    //if (socket)
-    args.GetReturnValue().Set(wrapSocket(&socket, isolate)->Clone());
+    if (socket) {
+        args.GetReturnValue().Set(wrapSocket(&socket, isolate)->Clone());
+    }
 }
 
 void close(const FunctionCallbackInfo<Value> &args)
 {
-    unwrapSocket(args[0]->ToObject()).close();
+    if (!args.Length()) {
+        // shut down the server
+    }
+    else {
+        // shut down the socket
+        unwrapSocket(args[0]->ToObject()).close();
+    }
 }
 
 void send(const FunctionCallbackInfo<Value> &args)

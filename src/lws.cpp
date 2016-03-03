@@ -72,7 +72,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
     {
         *lws::Socket(wsi, ext).getUser() = nullptr;
-        if (serverInternals->upgradeCallback) {
+        if (serverInternals->upgradeCallback && !serverInternals->adoptFd) {
             serverInternals->upgradeCallback({wsi, ext});
         }
         break;
@@ -99,8 +99,11 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
         new (&ext->messages) queue<SocketExtension::Message>;
-        serverInternals->adoptedSocket = lws::Socket(wsi, ext); // check for same fd also!
-        if (serverInternals->connectionCallback) {
+        if (serverInternals->adoptFd == clws::lws_get_socket_fd(wsi)) {
+            serverInternals->adoptedSocket = lws::Socket(wsi, ext);
+            break;
+        }
+        if (serverInternals->connectionCallback && !serverInternals->adoptFd) {
             serverInternals->connectionCallback({wsi, ext});
         }
         break;
@@ -283,14 +286,16 @@ void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)
     internals.disconnectionCallback = disconnectionCallback;
 }
 
-Socket Server::adoptSocket(size_t fd, const char *header, size_t length) // return lws::Socket!
+Socket Server::adoptSocket(size_t fd, const char *header, size_t length)
 {
-    internals.adoptedSocket = Socket(nullptr, nullptr);
 #ifndef __APPLE__
 #define dup clws::dup
 #endif
-    clws::lws_adopt_socket_readbuf(context, dup(fd), header, length);
 
+    internals.adoptFd = dup(fd);
+    internals.adoptedSocket = Socket(nullptr, nullptr);
+    clws::lws_adopt_socket_readbuf(context, internals.adoptFd, header, length);
+    internals.adoptFd = 0;
     return internals.adoptedSocket;
 }
 

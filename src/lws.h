@@ -43,12 +43,18 @@ public:
     {
         return &((SocketExtension *) extension)->user;
     }
+
+    operator bool()
+    {
+        return wsi;
+    }
 };
 
 class Server;
 
 struct ServerInternals {
     Server *server;
+    int adoptFd = 0;
     Socket adoptedSocket = Socket(nullptr, nullptr);
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
