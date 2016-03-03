@@ -46,7 +46,7 @@ void Main(Local<Object> exports)
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
 
     Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
-    socketTemplate->SetInternalFieldCount(2);
+    socketTemplate->SetInternalFieldCount(1);
     persistentSocket.Reset(isolate, socketTemplate->NewInstance());
 
     Local<ObjectTemplate> headersTemplate = ObjectTemplate::New(isolate);
@@ -198,7 +198,6 @@ inline Local<Object> wrapSocket(lws::Socket *socket, Isolate *isolate)
         Local<Object> wrap(Local<Object> s)
         {
             s->SetAlignedPointerInInternalField(0, wsi);
-            s->SetAlignedPointerInInternalField(1, extension);
             return s;
         }
     };
@@ -208,8 +207,7 @@ inline Local<Object> wrapSocket(lws::Socket *socket, Isolate *isolate)
 
 inline lws::Socket unwrapSocket(Local<Object> object)
 {
-    return lws::Socket((lws::clws::lws *) object->GetAlignedPointerFromInternalField(0),
-                                          object->GetAlignedPointerFromInternalField(1));
+    return lws::Socket((lws::clws::lws *) object->GetAlignedPointerFromInternalField(0));
 }
 
 Local<Object> generateHeaders(Isolate *isolate, lws::Socket &socket)

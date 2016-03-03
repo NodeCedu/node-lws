@@ -30,19 +30,15 @@ struct SocketExtension {
 struct Socket {
 protected:
     clws::lws *wsi;
-    void *extension;
 public:
-    Socket(clws::lws *wsi, void *extension);
+    Socket(clws::lws *wsi);
     void send(char *data, size_t length, bool binary);
     void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
     char *getHeader(int header);
     char *getHeaderName(int header);
     int getFd();
     void close();
-    void **getUser()
-    {
-        return &((SocketExtension *) extension)->user;
-    }
+    void **getUser();
 
     operator bool()
     {
@@ -55,7 +51,7 @@ class Server;
 struct ServerInternals {
     Server *server;
     int adoptFd = 0;
-    Socket adoptedSocket = Socket(nullptr, nullptr);
+    Socket adoptedSocket = Socket(nullptr);
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
     std::function<void(Socket)> connectionCallback;

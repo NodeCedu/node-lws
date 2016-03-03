@@ -71,9 +71,9 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
     {
-        *lws::Socket(wsi, ext).getUser() = nullptr;
+        *lws::Socket(wsi).getUser() = nullptr;
         if (serverInternals->upgradeCallback && !serverInternals->adoptFd) {
-            serverInternals->upgradeCallback({wsi, ext});
+            serverInternals->upgradeCallback({wsi});
         }
         break;
     }
@@ -83,7 +83,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         // currently we only support getting the headers and closing it
         // wip
         if (serverInternals->httpCallback) {
-            serverInternals->httpCallback({wsi, ext}, (char *) in, len);
+            serverInternals->httpCallback({wsi}, (char *) in, len);
         }
         //returning 1 here will close it!
         return 1;
@@ -100,11 +100,11 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     {
         new (&ext->messages) queue<SocketExtension::Message>;
         if (serverInternals->adoptFd == clws::lws_get_socket_fd(wsi)) {
-            serverInternals->adoptedSocket = lws::Socket(wsi, ext);
+            serverInternals->adoptedSocket = lws::Socket(wsi);
             break;
         }
         if (serverInternals->connectionCallback && !serverInternals->adoptFd) {
-            serverInternals->connectionCallback({wsi, ext});
+            serverInternals->connectionCallback({wsi});
         }
         break;
     }
@@ -118,7 +118,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         ext->messages.~queue<SocketExtension::Message>();
 
         if (serverInternals->disconnectionCallback) {
-            serverInternals->disconnectionCallback({wsi, ext});
+            serverInternals->disconnectionCallback({wsi});
         }
         break;
     }
@@ -126,7 +126,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_RECEIVE:
     {
         if (serverInternals->messageCallback) {
-            serverInternals->messageCallback({wsi, ext}, (char *) in, len, lws_frame_is_binary(wsi));
+            serverInternals->messageCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi));
         }
         break;
     }
@@ -136,7 +136,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     return 0;
 }
 
-Socket::Socket(clws::lws *wsi, void *extension) : wsi(wsi), extension(extension)
+Socket::Socket(clws::lws *wsi) : wsi(wsi)
 {
 
 }
@@ -150,7 +150,7 @@ void Socket::send(char *data, size_t length, bool binary)
 
 void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership)
 {
-    SocketExtension *ext = (SocketExtension *) extension;
+    SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
     SocketExtension::Message message = {
         binary,
         paddedBuffer,
@@ -199,6 +199,11 @@ void Socket::close()
 {
     // this will trigger a close of the socket
     shutdown(getFd(), SHUT_RDWR);
+}
+
+void **Socket::getUser()
+{
+    return &((SocketExtension *) clws::lws_wsi_user(wsi))->user;
 }
 
 Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate,
@@ -293,7 +298,7 @@ Socket Server::adoptSocket(size_t fd, const char *header, size_t length)
 #endif
 
     internals.adoptFd = dup(fd);
-    internals.adoptedSocket = Socket(nullptr, nullptr);
+    internals.adoptedSocket = Socket(nullptr);
     clws::lws_adopt_socket_readbuf(context, internals.adoptFd, header, length);
     internals.adoptFd = 0;
     return internals.adoptedSocket;
