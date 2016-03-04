@@ -3,7 +3,7 @@ Running ```make && ./bench1 500000 3000``` you will get results similar to these
 Connection performance: 3.77718 connections/ms  
 Memory performance: 51.9015 connections/mb
 
-Connection performance: 67.1501 connections/ms
+Connection performance: 67.1501 connections/ms  
 Memory performance: 147.411 connections/mb
 
 That is,
