@@ -5,7 +5,7 @@
 * ```node-lws``` establishes connections in less than 10% the time compared to ```ws```.
 * ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
 
-Primus support is included in 5.0. Use 'lws' as transformer & report any issues here.
+[Primus](https://github.com/primus/primus#lws) support is included in 5.0. Use 'lws' as transformer & report any issues here.
 
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
