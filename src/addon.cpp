@@ -89,7 +89,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         Local<Object> perMessageDeflate;
         if (getObject(args.GetIsolate(), options, "perMessageDeflate", perMessageDeflate)) {
             Local<Array> propertyNames = perMessageDeflate->GetPropertyNames();
-            for (int i = 0; i < propertyNames->Length(); i++) {
+            for (unsigned int i = 0; i < propertyNames->Length(); i++) {
                 String::Utf8Value propertyName(propertyNames->Get(i));
                 Local<Value> propertyValue = perMessageDeflate->Get(propertyNames->Get(i));
                 if (!(propertyValue->IsBoolean() && !propertyValue->BooleanValue())) {
@@ -168,8 +168,8 @@ Local<Object> generateHeaders(Isolate *isolate, lws::Socket &socket)
     // optimize this! (keep const string names persistent, etc)
     Local<Object> headersObject = Local<Object>::New(isolate, persistentHeaders);
     int i = 0;
-    for (char *headerName, *header; headerName = socket.getHeaderName(i); i++) {
-        if (header = socket.getHeader(i)) {
+    for (char *headerName, *header; (headerName = socket.getHeaderName(i)); i++) {
+        if ((header = socket.getHeader(i))) {
             headersObject->Set(String::NewFromUtf8(isolate, headerName, String::kNormalString, strlen(headerName) - 1), String::NewFromUtf8(isolate, header));
         }
         else {
