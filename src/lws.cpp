@@ -175,8 +175,9 @@ void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferO
     };
     ext->messages.push(message);
 
-    // Request notification when writing is allowed
-    lws_callback_on_writable(wsi);
+    if (ext->messages.size() == 1) {
+        lws_callback_on_writable(wsi);
+    }
 }
 
 char *Socket::getHeader(int header)
