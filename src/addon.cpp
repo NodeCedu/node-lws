@@ -9,49 +9,9 @@
 using namespace std;
 using namespace v8;
 
-void Main(Local<Object> exports);
-void constructor(const FunctionCallbackInfo<Value> &args);
-void on(const FunctionCallbackInfo<Value> &args);
-void send(const FunctionCallbackInfo<Value> &args);
-void setUserData(const FunctionCallbackInfo<Value> &args);
-void getUserData(const FunctionCallbackInfo<Value> &args);
-void getFd(const FunctionCallbackInfo<Value> &args);
-void handleUpgrade(const FunctionCallbackInfo<Value> &args);
-void prepareBuffer(const FunctionCallbackInfo<Value> &args);
-void sendPrepared(const FunctionCallbackInfo<Value> &args);
-void close(const FunctionCallbackInfo<Value> &args);
-
-NODE_MODULE(lws, Main)
-
 // these could be stored in the Server object as 3 aligned pointers?
 Persistent<Function> connectionCallback, closeCallback, messageCallback, httpCallback, upgradeCallback;
 Persistent<Object> persistentSocket, persistentHeaders;
-
-void Main(Local<Object> exports)
-{
-    Isolate *isolate = exports->GetIsolate();
-    Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, constructor);
-    tpl->InstanceTemplate()->SetInternalFieldCount(1);
-
-    NODE_SET_PROTOTYPE_METHOD(tpl, "on", on);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "send", send);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "prepareBuffer", prepareBuffer);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "sendPrepared", sendPrepared);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
-
-    exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
-
-    Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
-    socketTemplate->SetInternalFieldCount(1);
-    persistentSocket.Reset(isolate, socketTemplate->NewInstance());
-
-    Local<ObjectTemplate> headersTemplate = ObjectTemplate::New(isolate);
-    persistentHeaders.Reset(isolate, headersTemplate->NewInstance());
-}
 
 // helpers
 string camelCaseToUnderscore(string camelCase)
@@ -387,3 +347,31 @@ void sendPrepared(const FunctionCallbackInfo<Value> &args)
             , args[2]->BooleanValue()
             , false);
 }
+
+void Main(Local<Object> exports)
+{
+    Isolate *isolate = exports->GetIsolate();
+    Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, constructor);
+    tpl->InstanceTemplate()->SetInternalFieldCount(1);
+
+    NODE_SET_PROTOTYPE_METHOD(tpl, "on", on);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "send", send);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "setUserData", setUserData);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "getUserData", getUserData);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "getFd", getFd);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "prepareBuffer", prepareBuffer);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "sendPrepared", sendPrepared);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
+
+    exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());
+
+    Local<ObjectTemplate> socketTemplate = ObjectTemplate::New(isolate);
+    socketTemplate->SetInternalFieldCount(1);
+    persistentSocket.Reset(isolate, socketTemplate->NewInstance());
+
+    Local<ObjectTemplate> headersTemplate = ObjectTemplate::New(isolate);
+    persistentHeaders.Reset(isolate, headersTemplate->NewInstance());
+}
+
+NODE_MODULE(lws, Main)
