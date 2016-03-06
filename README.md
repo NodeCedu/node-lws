@@ -5,7 +5,7 @@
 * ```node-lws``` establishes connections in less than 10% the time compared to ```ws```.
 * ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
 
-Initial primus support should be included in 5.0 or 4.0.6. Use 'lws' as transformer & report any issues here.
+[Primus](https://github.com/primus/primus#lws) support is included in 5.0. Use 'lws' as transformer & report any issues here.
 
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
@@ -75,12 +75,6 @@ Constructs a new Server object. ```options``` is an object with these fields:
   * ciphers : String
   * rejectUnauthorized : Boolean
 
-#### Event: 'http'
-```javascript
-function (socket, request) { }
-```
-Emitted when a regular HTTP request has been received. This event is not emitted for WebSocket upgrade requests.
-
 #### Event: 'upgrade'
 ```javascript
 function (socket, headers) { }
@@ -142,6 +136,12 @@ server.send(socket, buffer, false);
 
 Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
 
+#### close(socket)
+```javascript
+server.close(socket);
+```
+Gracefully close the ```socket``` by shutting it down. If any messages are peding they will be sent before closing the socket. This will not trigger the 'close' event.
+
 #### prepareBuffer(buffer)
 ```javascript
 var preparedBuffer = server.prepareBuffer(buffer);
@@ -162,8 +162,8 @@ var webSocket = server.handleUpgrade(socket, request, head);
 ```
 For use with the built-in ```http.Server```. Call this function from the ```http.Server 'upgrade'``` event to import and upgrade the connection. This function will return either ```undefined``` or the upgraded WebSocket. Events 'upgrade' and 'connection' will not be triggered by this call.
 
-#### close(socket)
+#### Event: 'http'
 ```javascript
-server.close(socket);
+function (socket, request) { }
 ```
-Gracefully close the ```socket``` by shutting it down. This will trigger the 'close' event.
+Emitted when a regular HTTP request has been received. This event is not emitted for WebSocket upgrade requests.
