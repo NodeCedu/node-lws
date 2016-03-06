@@ -17,13 +17,9 @@ Persistent<Object> persistentSocket, persistentHeaders;
 string camelCaseToUnderscore(string camelCase)
 {
     string underscore;
-    for (char c : camelCase) {
-        if (isupper(c)) {
-            underscore += "_";
-            underscore += tolower(c);
-        }
-        else {
-            underscore += c;
+    for (const char *c = camelCase.c_str(); *c; underscore += tolower(*c++)) {
+        if (isupper(*c)) {
+            underscore += '_';
         }
     }
     return underscore;
@@ -69,10 +65,7 @@ bool getBool(Isolate *isolate, Local<Object> &object, const char *key, bool &out
 
 const char *nullOrC(string &str)
 {
-    if (str.length()) {
-        return str.c_str();
-    }
-    return nullptr;
+    return str.length() ? str.c_str() : nullptr;
 }
 
 void constructor(const FunctionCallbackInfo<Value> &args)
