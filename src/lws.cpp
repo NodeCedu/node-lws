@@ -211,13 +211,16 @@ void **Socket::getUser()
 }
 
 Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate,
-               const char *perMessageDeflateOptions, const char *certPath, const char *keyPath, const char *caPath, const char *ciphers, bool rejectUnauthorized)
+               const char *perMessageDeflateOptions, const char *certPath, const char *keyPath, const char *caPath, const char *ciphers, bool rejectUnauthorized,
+               size_t bufferSize)
 {
     clws::lws_set_log_level(0, nullptr);
 
     clws::lws_protocols *protocols = new clws::lws_protocols[2];
     protocols[0] = {protocolName ? protocolName : "default", callback, sizeof(SocketExtension)};
     protocols[1] = {nullptr, nullptr, 0};
+
+    protocols[0].rx_buffer_size = bufferSize;
 
     clws::lws_extension *extensions = new clws::lws_extension[2];
     memset(extensions, 0, sizeof(clws::lws_extension) * 2);

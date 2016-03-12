@@ -77,6 +77,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         int keepAliveTime = getInt(args.GetIsolate(), options, "keepAliveTime");
         int keepAliveInterval = getInt(args.GetIsolate(), options, "keepAliveInterval");
         int keepAliveRetry = getInt(args.GetIsolate(), options, "keepAliveRetry");
+        int bufferSize = getInt(args.GetIsolate(), options, "bufferSize");
 
 #ifdef VERBOSE_SERVER
         cout << "Using port = " << port << ", path = " << path
@@ -134,7 +135,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         try {
             server = new lws::Server(port, nullOrC(path), keepAliveTime, keepAliveRetry,
                                      keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str(),
-                                     nullOrC(certPath), nullOrC(keyPath), nullOrC(caPath), nullOrC(ciphers), rejectUnauthorized);
+                                     nullOrC(certPath), nullOrC(keyPath), nullOrC(caPath), nullOrC(ciphers), rejectUnauthorized, bufferSize);
         }
         catch (...) {
             server = nullptr;
