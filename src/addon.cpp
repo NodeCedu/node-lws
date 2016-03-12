@@ -227,13 +227,14 @@ void on(const FunctionCallbackInfo<Value> &args)
     }
     else if (server && !strncmp(*eventName, "message", eventName.length())) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary) {
+        server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary, size_t remainingBytes) {
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate),
                                    /*ArrayBuffer::New(isolate, data, length)*/
                                    node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked(),
-                                   Boolean::New(isolate, binary)};
-            Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 3, argv);
+                                   Boolean::New(isolate, binary),
+                                   Integer::NewFromUnsigned(isolate, remainingBytes)};
+            Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 4, argv);
         });
     }
 }

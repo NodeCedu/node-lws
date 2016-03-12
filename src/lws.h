@@ -56,7 +56,7 @@ struct ServerInternals {
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
     std::function<void(Socket)> connectionCallback;
-    std::function<void(Socket, char *data, size_t length, bool binary)> messageCallback;
+    std::function<void(Socket, char *data, size_t length, bool binary, size_t remainingBytes)> messageCallback;
     std::function<void(Socket)> disconnectionCallback;
 };
 
@@ -78,7 +78,7 @@ public:
     void onHttp(std::function<void(lws::Socket, char *, size_t)> httpCallback);
     void onUpgrade(std::function<void(lws::Socket)> upgradeCallback);
     void onConnection(std::function<void(Socket)> connectionCallback);
-    void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
+    void onMessage(std::function<void(Socket, char *, size_t, bool, size_t)> messageCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     Socket adoptSocket(size_t fd, const char *header, size_t length);
     void run();

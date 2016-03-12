@@ -63,18 +63,6 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         break;
     }
 
-    /*case clws::LWS_CALLBACK_WSI_CREATE:
-    {
-
-        break;
-    }
-
-    case clws::LWS_CALLBACK_WSI_DESTROY:
-    {
-
-        break;
-    }*/
-
     case clws::LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION:
     {
         *lws::Socket(wsi).getUser() = nullptr;
@@ -93,12 +81,6 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         }
         //returning 1 here will close it!
         return 1;
-        break;
-    }
-
-    case clws::LWS_CALLBACK_CLOSED_HTTP:
-    {
-        //cout << "Closed http connection!" << endl;
         break;
     }
 
@@ -134,7 +116,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_RECEIVE:
     {
         if (serverInternals->messageCallback) {
-            serverInternals->messageCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi));
+            serverInternals->messageCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi), lws_remaining_packet_payload(wsi));
         }
         break;
     }
@@ -303,7 +285,7 @@ void Server::onConnection(function<void(lws::Socket)> connectionCallback)
     internals.connectionCallback = connectionCallback;
 }
 
-void Server::onMessage(function<void(lws::Socket, char *, size_t, bool)> messageCallback)
+void Server::onMessage(function<void(lws::Socket, char *, size_t, bool, size_t)> messageCallback)
 {
     internals.messageCallback = messageCallback;
 }
