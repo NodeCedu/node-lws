@@ -65,6 +65,8 @@ module.exports.wsServer = function wsServer(options) {
 		} else {
 			if (ws.prev != null) {
 				ws.prev.next = ws.next;
+			} else {
+				clients = ws.next;
 			}
 			if (ws.next != null) {
 				ws.next.prev = ws.prev;
