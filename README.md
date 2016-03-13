@@ -6,6 +6,7 @@
 * ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
 
 [Primus](https://github.com/primus/primus#lws) support is included in 5.0. Use 'lws' as transformer & report any issues here.
+The [ws interface](https://github.com/websockets/ws/blob/master/doc/ws.md) is exposed as `lws.wsServer` as opposed to ("core") `lws.Server`.
 
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
@@ -14,10 +15,10 @@
 npm install --save lws
 ```
 
-* Node 4.x, 5.x support (ABI 46-47).
+* Node 4.x, 5.x support (ABI 46-47)
 * Linux & Mac OS X 10.7+
 
-NOTE: This project started Jan 13, 2016. Please use the issue tracker to report bugs, feature requests and other opinions. Also, there might be short periods of time where the (npm) published version is behind the version on [GitHub](https://github.com/alexhultman/node-lws).
+Please use the [issue tracker](https://github.com/alexhultman/node-lws/issues) to report bugs, feature requests and other opinions. If you have questions, don't hesitate to post.
 
 ## Overview
 ```javascript
@@ -75,6 +76,11 @@ Constructs a new Server object. ```options``` is an object with these fields:
   * ca : String (path)
   * ciphers : String
   * rejectUnauthorized : Boolean
+
+#### *A note on sockets*
+An lws socket is just a pointer, so using it past 'close' is invalid (the memory it points to has been deleted). If you need data (objects, strings, etc) to survive past the 'close' event you need to create that resource in JS-land and attach it to the socket. Any function taking a socket will (potentially, most definitely) crash or hang the process, if that socket has been closed.
+
+If you want a fail safe (yet heavier) interface you could check out `lws.wsServer` that aims to mimic `ws` in behavior as closely as possible.
 
 #### Event: 'upgrade'
 ```javascript
