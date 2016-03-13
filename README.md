@@ -18,6 +18,8 @@ npm install --save lws
 * Node 4.x, 5.x support (ABI 46-47)
 * Linux & Mac OS X 10.7+
 
+Please use the [issue tracker](https://github.com/alexhultman/node-lws/issues) to report bugs, feature requests and other opinions. If you have questions, don't hesitate to post.
+
 ## Overview
 ```javascript
 var lws = require('lws');
