@@ -326,21 +326,35 @@ void send(const FunctionCallbackInfo<Value> &args)
             , args[2]->BooleanValue());
 }
 
+// this guy needs to be transferred into sendPrepared
 void prepareBuffer(const FunctionCallbackInfo<Value> &args)
 {
     int length = node::Buffer::Length(args[0]);
-    Local<Object> paddedBuffer = node::Buffer::New(args.GetIsolate(), lws::Server::getPrePadding() + length + lws::Server::getPostPadding()).ToLocalChecked();
-    memcpy(node::Buffer::Data(paddedBuffer) + lws::Server::getPrePadding(), node::Buffer::Data(args[0]), length);
-    args.GetReturnValue().Set(paddedBuffer);
+
+    // PRE BUFFER POST REF_COUNT
+    int paddedLength = lws::Server::getPrePadding() + length + lws::Server::getPostPadding() + sizeof(int);
+    char *paddedBufferData = new char[paddedLength];
+    memcpy(paddedBufferData + lws::Server::getPrePadding(), node::Buffer::Data(args[0]), length);
+    int *refCount = (int *) (paddedBufferData + paddedLength - sizeof(int));
+    *refCount = 0;
+
+    args.GetReturnValue().Set(node::Buffer::New(args.GetIsolate(), paddedBufferData, paddedLength, [](char *data, void *hint) {
+        // the GC doesn't own this buffer, do not delete it!
+    }, nullptr).ToLocalChecked());
 }
 
 void sendPrepared(const FunctionCallbackInfo<Value> &args)
 {
+    char *paddedBuffer = node::Buffer::Data(args[1]);
+    int paddedLength = node::Buffer::Length(args[1]);
+    int *refCount = (int *) (paddedBuffer + paddedLength - sizeof(int));
+    (*refCount)++; // by removing this one, it should start crashing again!
+
     unwrapSocket(args[0]->ToObject())
-            .send(node::Buffer::Data(args[1])
-            , node::Buffer::Length(args[1]) - lws::Server::getPrePadding() - lws::Server::getPostPadding()
+            .send(paddedBuffer
+            , paddedLength - lws::Server::getPrePadding() - lws::Server::getPostPadding() - sizeof(int)
             , args[2]->BooleanValue()
-            , false);
+            , refCount);
 }
 
 void Main(Local<Object> exports)

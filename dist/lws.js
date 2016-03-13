@@ -30,9 +30,11 @@ module.exports.wsServer = function wsServer(options) {
 	};
 
 	this.broadcast = function (message) {
-		var preparedBuffer = server.prepareBuffer(new Buffer(message));
-		for (var it = clients; it != null; it = it.next) {
-			server.sendPrepared(it.lwsSocket, preparedBuffer, false);
+		if (clients != null) {
+			var preparedBuffer = server.prepareBuffer(new Buffer(message));
+			for (var it = clients; it != null; it = it.next) {
+				server.sendPrepared(it.lwsSocket, preparedBuffer, false);
+			}
 		}
 	}
 

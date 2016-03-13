@@ -22,7 +22,7 @@ struct SocketExtension {
         bool binary;
         char *buffer;
         size_t length;
-        bool owned;
+        int *refCount;
     };
 
     std::queue<Message> messages;
@@ -34,7 +34,7 @@ protected:
 public:
     Socket(clws::lws *wsi);
     void send(char *data, size_t length, bool binary);
-    void send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership);
+    void send(char *paddedBuffer, size_t length, bool binary, int *refCount);
     char *getHeader(int header);
     char *getHeaderName(int header);
     int getFd();

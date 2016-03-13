@@ -45,7 +45,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
             SocketExtension::Message &message = ext->messages.front();
             lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
-            if (message.owned) {
+            if (!message.refCount || !--*message.refCount) {
                 delete [] message.buffer;
             }
             ext->messages.pop();
@@ -101,7 +101,10 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
     case clws::LWS_CALLBACK_CLOSED:
     {
         while (!ext->messages.empty()) {
-            delete [] ext->messages.front().buffer;
+            SocketExtension::Message &message = ext->messages.front();
+            if (!message.refCount || !--*message.refCount) {
+                delete [] message.buffer;
+            }
             ext->messages.pop();
         }
         ext->messages.~queue<SocketExtension::Message>();
@@ -133,27 +136,19 @@ Socket::Socket(clws::lws *wsi) : wsi(wsi)
 
 void Socket::send(char *data, size_t length, bool binary)
 {
-    // ignore sendings on socket in closing state
-    SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
-    if (ext->closed) {
-        return;
-    }
-
     char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
     memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
-    send(paddedBuffer, length, binary, true);
+    send(paddedBuffer, length, binary, nullptr);
 }
 
-void Socket::send(char *paddedBuffer, size_t length, bool binary, bool transferOwnership)
+void Socket::send(char *paddedBuffer, size_t length, bool binary, int *refCount)
 {
-    // todo: we should also ignore sending preparedBuffers
-
     SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
     SocketExtension::Message message = {
         binary,
         paddedBuffer,
         length,
-        transferOwnership
+        refCount
     };
     ext->messages.push(message);
 
