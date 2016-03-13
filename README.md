@@ -158,6 +158,8 @@ var preparedBuffer = server.prepareBuffer(buffer);
 
 Prepares a Node.js Buffer for zero-copy sending. The passed buffer is copied into a larger, padded buffer which can be passed to ```sendPrepared``` for increased sending performance. Suitable when sending the same message many times, e.g. when broadcasting.
 
+The returned buffer *has to* be passed into at least one `sendPrepared` call to be properly deleted. Make sure not to call this function without at least one matching call to `sendPrepared`.
+
 #### sendPrepared(socket, message, binary)
 ```javascript
 server.sendPrepared(socket, buffer, false);
