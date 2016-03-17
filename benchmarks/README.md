@@ -20,3 +20,5 @@ Echo performance: 119.457 echoes/ms
 That is,
 
 * ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
+
+Beyond these tests, we have also benchmarked the echoing of a large buffer a 100MB. In this test we found node-lws to achieve ~1GB/sec throughput while the ws server (with binary addons) achieved ~330MB/sec. Multiple runs were averaged.
