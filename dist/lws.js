@@ -10,11 +10,15 @@ function wsSocket(lwsSocket, server) {
 	this.server = server;
 	this.next = this.prev = null;
 
-	this.send = function (message) {
+	this.send = function (message, options) {
 		if (wsSocket.lwsSocket != null) {
-			wsSocket.server.send(wsSocket.lwsSocket, new Buffer(message), false);
+			var binary = false;
+			if (options != undefined) {
+				binary = options.binary;
+			}
+			wsSocket.server.send(wsSocket.lwsSocket, message, binary);
 		} else {
-			console.log('ERROR: Sending on closed socket!');
+			// just ignore sends on closed sockets
 		}
 	}
 }
@@ -29,11 +33,15 @@ module.exports.wsServer = function wsServer(options) {
 		server.close();
 	};
 
-	this.broadcast = function (message) {
+	this.broadcast = function (message, options) {
 		if (clients != null) {
+			var binary = false;
+			if (options != undefined) {
+				binary = options.binary;
+			}
 			var preparedBuffer = server.prepareBuffer(new Buffer(message));
 			for (var it = clients; it != null; it = it.next) {
-				server.sendPrepared(it.lwsSocket, preparedBuffer, false);
+				server.sendPrepared(it.lwsSocket, preparedBuffer, binary);
 			}
 		}
 	}
