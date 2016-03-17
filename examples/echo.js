@@ -1,5 +1,5 @@
 var lws = require('../dist/lws');
-var server = new lws.Server({ port: 3000 });
+var server = new lws.Server({ port: 3000, bufferSize: 1024000, maxMessageSize: 1024 * 1024 * 100 });
 var connections = 0;
 
 server.on('error', function (error) {
@@ -13,8 +13,14 @@ server.on('connection', function (socket) {
     }
 });
 
+// we can echo per message (buffered, slow)
 server.on('message', function (socket, message, binary) {
-    server.send(socket, message, false);
+    server.send(socket, message, binary);
+});
+
+// or per fragment (nonbuffered, fast)
+server.on('fragment', function (socket, message, binary, bytesRemaining) {
+    //server.sendFragment(socket, message, binary, bytesRemaining);
 });
 
 server.on('close', function (socket) {

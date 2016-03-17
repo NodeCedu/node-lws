@@ -26,6 +26,7 @@ extern int LWS_TEXT;
 struct SocketExtension {
     void *user;
     char state = FRAGMENT_START;
+    std::string *receiveBuffer = nullptr;
 
     struct Message {
         int flags;
@@ -64,11 +65,13 @@ struct ServerInternals {
     int adoptFd = 0;
     bool closingDown = false;
     int pendingMessages = 0;
+    size_t maxMessageSize;
     Socket adoptedSocket = Socket(nullptr);
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
     std::function<void(Socket)> connectionCallback;
-    std::function<void(Socket, char *data, size_t length, bool binary, size_t remainingBytes)> messageCallback;
+    std::function<void(Socket, char *data, size_t length, bool binary)> messageCallback;
+    std::function<void(Socket, char *data, size_t length, bool binary, size_t remainingBytes)> fragmentCallback;
     std::function<void(Socket)> disconnectionCallback;
 };
 
@@ -87,11 +90,12 @@ public:
     Server(unsigned int port, const char *protocolName = nullptr, unsigned int ka_time = 0, unsigned int ka_probes = 0,
            unsigned int ka_interval = 0, bool perMessageDeflate = true, const char *perMessageDeflateOptions = nullptr,
            const char *certPath = nullptr, const char *keyPath = nullptr, const char *caPath = nullptr,
-           const char *ciphers = nullptr, bool rejectUnauthorized = true, size_t bufferSize = 0);
+           const char *ciphers = nullptr, bool rejectUnauthorized = true, size_t bufferSize = 0, size_t maxMessageSize = 1024 * 16);
     void onHttp(std::function<void(lws::Socket, char *, size_t)> httpCallback);
     void onUpgrade(std::function<void(lws::Socket)> upgradeCallback);
     void onConnection(std::function<void(Socket)> connectionCallback);
-    void onMessage(std::function<void(Socket, char *, size_t, bool, size_t)> messageCallback);
+    void onMessage(std::function<void(Socket, char *, size_t, bool)> messageCallback);
+    void onFragment(std::function<void(Socket, char *, size_t, bool, size_t)> fragmentCallback);
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     Socket adoptSocket(size_t fd, const char *header, size_t length);
     void run();

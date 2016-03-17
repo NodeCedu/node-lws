@@ -119,6 +119,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
             ext->messages.pop();
         }
         ext->messages.~queue<SocketExtension::Message>();
+        delete ext->receiveBuffer;
 
         // ignore close events that we triggered ourselves
         if (serverInternals->disconnectionCallback && ext->state != CLOSING) {
@@ -129,8 +130,28 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_RECEIVE:
     {
+        size_t remainingBytes = lws_remaining_packet_payload(wsi);
+
+        // buffer and truncate messages
         if (serverInternals->messageCallback) {
-            serverInternals->messageCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi), lws_remaining_packet_payload(wsi));
+            if (!remainingBytes) {
+                ext->receiveBuffer->append((const char *) in, min(len, serverInternals->maxMessageSize - ext->receiveBuffer->length()));
+                serverInternals->messageCallback({wsi}, (char *) ext->receiveBuffer->c_str(), ext->receiveBuffer->length(), lws_frame_is_binary(wsi));
+                ext->receiveBuffer->clear();
+            } else {
+                if (!ext->receiveBuffer) {
+                    ext->receiveBuffer = new string;
+                }
+                ext->receiveBuffer->append((const char *) in, min(len, serverInternals->maxMessageSize - ext->receiveBuffer->length()));
+                if (serverInternals->maxMessageSize == ext->receiveBuffer->length()) {
+                    serverInternals->messageCallback({wsi}, (char *) ext->receiveBuffer->c_str(), ext->receiveBuffer->length(), lws_frame_is_binary(wsi));
+                    ext->receiveBuffer->clear();
+                }
+            }
+        }
+
+        if (serverInternals->fragmentCallback) {
+            serverInternals->fragmentCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi), lws_remaining_packet_payload(wsi));
         }
         break;
     }
@@ -245,7 +266,7 @@ void **Socket::getUser()
 
 Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time, unsigned int ka_probes, unsigned int ka_interval, bool perMessageDeflate,
                const char *perMessageDeflateOptions, const char *certPath, const char *keyPath, const char *caPath, const char *ciphers, bool rejectUnauthorized,
-               size_t bufferSize)
+               size_t bufferSize, size_t maxMessageSize)
 {
     clws::lws_set_log_level(0, nullptr);
 
@@ -254,6 +275,7 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     protocols[1] = {nullptr, nullptr, 0};
 
     protocols[0].rx_buffer_size = bufferSize;
+    internals.maxMessageSize = maxMessageSize;
 
     clws::lws_extension *extensions = new clws::lws_extension[2];
     memset(extensions, 0, sizeof(clws::lws_extension) * 2);
@@ -329,9 +351,14 @@ void Server::onConnection(function<void(lws::Socket)> connectionCallback)
     internals.connectionCallback = connectionCallback;
 }
 
-void Server::onMessage(function<void(lws::Socket, char *, size_t, bool, size_t)> messageCallback)
+void Server::onMessage(function<void(lws::Socket, char *, size_t, bool)> messageCallback)
 {
     internals.messageCallback = messageCallback;
+}
+
+void Server::onFragment(function<void(lws::Socket, char *, size_t, bool, size_t)> fragmentCallback)
+{
+    internals.fragmentCallback = fragmentCallback;
 }
 
 void Server::onDisconnection(function<void(lws::Socket)> disconnectionCallback)

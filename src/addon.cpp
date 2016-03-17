@@ -10,7 +10,7 @@ using namespace std;
 using namespace v8;
 
 // these could be stored in the Server object as 3 aligned pointers?
-Persistent<Function> connectionCallback, closeCallback, messageCallback, httpCallback, upgradeCallback;
+Persistent<Function> connectionCallback, closeCallback, messageCallback, fragmentCallback, httpCallback, upgradeCallback;
 Persistent<Object> persistentSocket, persistentHeaders;
 
 // helpers
@@ -78,6 +78,7 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         int keepAliveInterval = getInt(args.GetIsolate(), options, "keepAliveInterval");
         int keepAliveRetry = getInt(args.GetIsolate(), options, "keepAliveRetry");
         int bufferSize = getInt(args.GetIsolate(), options, "bufferSize");
+        int maxMessageSize = getInt(args.GetIsolate(), options, "maxMessageSize");
 
 #ifdef VERBOSE_SERVER
         cout << "Using port = " << port << ", path = " << path
@@ -135,7 +136,8 @@ void constructor(const FunctionCallbackInfo<Value> &args)
         try {
             server = new lws::Server(port, nullOrC(path), keepAliveTime, keepAliveRetry,
                                      keepAliveInterval, usePerMessageDeflate, strPerMessageDeflate.c_str(),
-                                     nullOrC(certPath), nullOrC(keyPath), nullOrC(caPath), nullOrC(ciphers), rejectUnauthorized, bufferSize);
+                                     nullOrC(certPath), nullOrC(keyPath), nullOrC(caPath), nullOrC(ciphers),
+                                     rejectUnauthorized, bufferSize, maxMessageSize);
         }
         catch (...) {
             server = nullptr;
@@ -228,14 +230,24 @@ void on(const FunctionCallbackInfo<Value> &args)
     }
     else if (server && !strncmp(*eventName, "message", eventName.length())) {
         messageCallback.Reset(isolate, Local<Function>::Cast(args[1]));
-        server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary, size_t remainingBytes) {
+        server->onMessage([isolate](lws::Socket socket, char *data, size_t length, bool binary) {
             HandleScope hs(isolate);
             Local<Value> argv[] = {wrapSocket(&socket, isolate),
                                    /*ArrayBuffer::New(isolate, data, length)*/
                                    node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked(),
+                                   Boolean::New(isolate, binary)};
+            Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 3, argv);
+        });
+    }
+    else if (server && !strncmp(*eventName, "fragment", eventName.length())) {
+        fragmentCallback.Reset(isolate, Local<Function>::Cast(args[1]));
+        server->onFragment([isolate](lws::Socket socket, char *data, size_t length, bool binary, size_t remainingBytes) {
+            HandleScope hs(isolate);
+            Local<Value> argv[] = {wrapSocket(&socket, isolate),
+                                   node::Buffer::New(isolate, data, length, [](char *data, void *hint) {}, nullptr).ToLocalChecked(),
                                    Boolean::New(isolate, binary),
                                    Integer::NewFromUnsigned(isolate, remainingBytes)};
-            Local<Function>::New(isolate, messageCallback)->Call(Null(isolate), 4, argv);
+            Local<Function>::New(isolate, fragmentCallback)->Call(Null(isolate), 4, argv);
         });
     }
 }
