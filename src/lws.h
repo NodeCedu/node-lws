@@ -90,7 +90,7 @@ public:
     Server(unsigned int port, const char *protocolName = nullptr, unsigned int ka_time = 0, unsigned int ka_probes = 0,
            unsigned int ka_interval = 0, bool perMessageDeflate = true, const char *perMessageDeflateOptions = nullptr,
            const char *certPath = nullptr, const char *keyPath = nullptr, const char *caPath = nullptr,
-           const char *ciphers = nullptr, bool rejectUnauthorized = true, size_t bufferSize = 0, size_t maxMessageSize = 1024 * 16);
+           const char *ciphers = nullptr, bool rejectUnauthorized = true, size_t bufferSize = 0, size_t maxMessageSize = 1024 * 1024 * 16);
     void onHttp(std::function<void(lws::Socket, char *, size_t)> httpCallback);
     void onUpgrade(std::function<void(lws::Socket)> upgradeCallback);
     void onConnection(std::function<void(Socket)> connectionCallback);
