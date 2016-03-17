@@ -64,6 +64,7 @@ Constructs a new Server object. ```options``` is an object with these fields:
 * keepAliveInterval : Integer
 * keepAliveRetry : Integer
 * bufferSize : Integer
+* maxMessageSize : Integer
 * perMessageDeflate : Boolean | Object
   * serverNoContextTakeover : Boolean
   * clientNoContextTakeover : Boolean
@@ -103,10 +104,17 @@ Emitted when a server error has been raised. ```error``` argument is reserved fo
 
 #### Event: 'message'
 ```javascript
-function (socket, message, binary, remainingBytes) { }
+function (socket, message, binary) { }
 ```
 
 Emitted when a message has been received. ```message``` is a Node.js Buffer. This buffer is *only valid inside this callback*. When this callback goes out of scope, the internal memory will be invalidated. You need to make a *deep copy* of the message if you want to keep it for later.
+
+#### Event: 'fragment'
+```javascript
+function (socket, fragment, binary, remainingBytes) { }
+```
+
+Emitted when a message has been received. ```fragment``` is a Node.js Buffer. This buffer is *only valid inside this callback*. When this callback goes out of scope, the internal memory will be invalidated. You need to make a *deep copy* of the message if you want to keep it for later.
 
 Long messages will be split up into multiple fragments. ```remainingBytes``` will be zero once the message has been delivered in whole. In all other cases you need to buffer up the fragments or simply process them in a streaming fashion. Use server option ```bufferSize``` to set the maximum allowed fragment size.
 
