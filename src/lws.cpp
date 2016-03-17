@@ -135,9 +135,13 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         // buffer and truncate messages
         if (serverInternals->messageCallback) {
             if (!remainingBytes) {
-                ext->receiveBuffer->append((const char *) in, min(len, serverInternals->maxMessageSize - ext->receiveBuffer->length()));
-                serverInternals->messageCallback({wsi}, (char *) ext->receiveBuffer->c_str(), ext->receiveBuffer->length(), lws_frame_is_binary(wsi));
-                ext->receiveBuffer->clear();
+                if (!ext->receiveBuffer) {
+                    serverInternals->messageCallback({wsi}, (char *) in, len, lws_frame_is_binary(wsi));
+                } else {
+                    ext->receiveBuffer->append((const char *) in, min(len, serverInternals->maxMessageSize - ext->receiveBuffer->length()));
+                    serverInternals->messageCallback({wsi}, (char *) ext->receiveBuffer->c_str(), ext->receiveBuffer->length(), lws_frame_is_binary(wsi));
+                    ext->receiveBuffer->clear();
+                }
             } else {
                 if (!ext->receiveBuffer) {
                     ext->receiveBuffer = new string;
