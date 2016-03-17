@@ -19,8 +19,8 @@ int main(int argc, char *argv[])
 
         });
 
-        server.onMessage([](lws::Socket socket, char *data, size_t length, bool binary) {
-            socket.send(data, length, binary);
+        server.onMessage([](lws::Socket socket, char *data, size_t length, bool binary, size_t remainingBytes) {
+            socket.sendFragment(data, length, binary, remainingBytes);
         });
 
         cout << "Running echo server on port 3000" << endl;
