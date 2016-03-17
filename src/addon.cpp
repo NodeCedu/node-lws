@@ -309,8 +309,8 @@ void close(const FunctionCallbackInfo<Value> &args)
         server->close();
 
         // detach the server from this object
-        //delete server;
-        //args.Holder()->SetAlignedPointerInInternalField(0, nullptr);
+        delete server;
+        args.Holder()->SetAlignedPointerInInternalField(0, nullptr);
     }
     else {
         // shut down the socket
@@ -320,6 +320,18 @@ void close(const FunctionCallbackInfo<Value> &args)
 
 void send(const FunctionCallbackInfo<Value> &args)
 {
+    // send strings as utf-8
+    /*if (args[1]->IsString()) {
+        String::Utf8Value v8String(args[1]);
+
+        unwrapSocket(args[0]->ToObject())
+                .send(*v8String
+                , v8String.length()
+                , args[2]->BooleanValue());
+
+        return;
+    }*/
+
     unwrapSocket(args[0]->ToObject())
             .send(node::Buffer::Data(args[1])
             , node::Buffer::Length(args[1])
@@ -357,6 +369,15 @@ void sendPrepared(const FunctionCallbackInfo<Value> &args)
             , refCount);
 }
 
+void sendFragment(const FunctionCallbackInfo<Value> &args)
+{
+    unwrapSocket(args[0]->ToObject())
+            .sendFragment(node::Buffer::Data(args[1])
+            , node::Buffer::Length(args[1])
+            , args[2]->BooleanValue()
+            , args[3]->IntegerValue());
+}
+
 void Main(Local<Object> exports)
 {
     Isolate *isolate = exports->GetIsolate();
@@ -371,6 +392,7 @@ void Main(Local<Object> exports)
     NODE_SET_PROTOTYPE_METHOD(tpl, "handleUpgrade", handleUpgrade);
     NODE_SET_PROTOTYPE_METHOD(tpl, "prepareBuffer", prepareBuffer);
     NODE_SET_PROTOTYPE_METHOD(tpl, "sendPrepared", sendPrepared);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "sendFragment", sendFragment);
     NODE_SET_PROTOTYPE_METHOD(tpl, "close", close);
 
     exports->Set(String::NewFromUtf8(isolate, "Server"), tpl->GetFunction());

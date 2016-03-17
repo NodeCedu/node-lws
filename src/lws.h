@@ -14,12 +14,21 @@ struct lws_context;
 struct lws;
 }
 
+enum SocketState {
+    FRAGMENT_START,
+    FRAGMENT_MID,
+    CLOSING
+};
+
+extern int LWS_BINARY;
+extern int LWS_TEXT;
+
 struct SocketExtension {
     void *user;
-    bool closed;
+    char state = FRAGMENT_START;
 
     struct Message {
-        bool binary;
+        int flags;
         char *buffer;
         size_t length;
         int *refCount;
@@ -34,7 +43,8 @@ protected:
 public:
     Socket(clws::lws *wsi);
     void send(char *data, size_t length, bool binary);
-    void send(char *paddedBuffer, size_t length, bool binary, int *refCount);
+    void send(char *paddedBuffer, size_t length, int flags, int *refCount);
+    void sendFragment(char *data, size_t length, bool binary, size_t remainingBytes);
     char *getHeader(int header);
     char *getHeaderName(int header);
     int getFd();
@@ -52,6 +62,8 @@ class Server;
 struct ServerInternals {
     Server *server;
     int adoptFd = 0;
+    bool closingDown = false;
+    int pendingMessages = 0;
     Socket adoptedSocket = Socket(nullptr);
     std::function<void(Socket)> upgradeCallback;
     std::function<void(Socket, char *data, size_t length)> httpCallback;
@@ -70,6 +82,7 @@ private:
 #endif
     clws::lws_context *context;
     ServerInternals internals;
+    void *protocolsPtr, *extensionsPtr;
 public:
     Server(unsigned int port, const char *protocolName = nullptr, unsigned int ka_time = 0, unsigned int ka_probes = 0,
            unsigned int ka_interval = 0, bool perMessageDeflate = true, const char *perMessageDeflateOptions = nullptr,
@@ -82,7 +95,7 @@ public:
     void onDisconnection(std::function<void(Socket)> disconnectionCallback);
     Socket adoptSocket(size_t fd, const char *header, size_t length);
     void run();
-    void close();
+    void close(bool force = false);
     static size_t getPrePadding();
     static size_t getPostPadding();
 #ifdef LIBUV_BACKEND

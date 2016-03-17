@@ -14,8 +14,11 @@
 #endif
 
 #include <iostream>
+#include <vector>
 #include <new>
 using namespace std;
+
+vector<lws::Server *> servers;
 
 namespace lws
 {
@@ -29,6 +32,9 @@ namespace clws
 {
 #include <libwebsockets.h>
 }
+
+int LWS_BINARY = clws::LWS_WRITE_BINARY;
+int LWS_TEXT = clws::LWS_WRITE_TEXT;
 
 int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void *in, size_t len)
 {
@@ -44,9 +50,12 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
                 break;
 
             SocketExtension::Message &message = ext->messages.front();
-            lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, message.binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT);
+            lws_write(wsi, (unsigned char *) message.buffer + LWS_SEND_BUFFER_PRE_PADDING, message.length, (clws::lws_write_protocol) message.flags);
             if (!message.refCount || !--*message.refCount) {
                 delete [] message.buffer;
+            }
+            if (!--serverInternals->pendingMessages && serverInternals->closingDown) {
+                serverInternals->server->close(true);
             }
             ext->messages.pop();
         } while(!ext->messages.empty() && !lws_partial_buffered(wsi));
@@ -56,7 +65,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
         }
         else {
             // we are now empty and ready to close the socket
-            if (ext->closed) {
+            if (ext->state == CLOSING) {
                 shutdown(clws::lws_get_socket_fd(wsi), SHUT_RDWR);
             }
         }
@@ -86,8 +95,7 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
 
     case clws::LWS_CALLBACK_ESTABLISHED:
     {
-        ext->closed = false;
-        new (&ext->messages) queue<SocketExtension::Message>;
+        new (ext) SocketExtension;
         if (serverInternals->adoptFd == clws::lws_get_socket_fd(wsi)) {
             serverInternals->adoptedSocket = lws::Socket(wsi);
             break;
@@ -105,12 +113,15 @@ int callback(clws::lws *wsi, clws::lws_callback_reasons reason, void *user, void
             if (!message.refCount || !--*message.refCount) {
                 delete [] message.buffer;
             }
+            if (!--serverInternals->pendingMessages && serverInternals->closingDown) {
+                serverInternals->server->close(true);
+            }
             ext->messages.pop();
         }
         ext->messages.~queue<SocketExtension::Message>();
 
         // ignore close events that we triggered ourselves
-        if (serverInternals->disconnectionCallback && !ext->closed) {
+        if (serverInternals->disconnectionCallback && ext->state != CLOSING) {
             serverInternals->disconnectionCallback({wsi});
         }
         break;
@@ -138,23 +149,50 @@ void Socket::send(char *data, size_t length, bool binary)
 {
     char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
     memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
-    send(paddedBuffer, length, binary, nullptr);
+    send(paddedBuffer, length, binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT, nullptr);
 }
 
-void Socket::send(char *paddedBuffer, size_t length, bool binary, int *refCount)
+void Socket::send(char *paddedBuffer, size_t length, int flags, int *refCount)
 {
     SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
     SocketExtension::Message message = {
-        binary,
+        flags,
         paddedBuffer,
         length,
         refCount
     };
     ext->messages.push(message);
+    lws::ServerInternals *serverInternals = (lws::ServerInternals *) lws_context_user(lws_get_context(wsi));
+    serverInternals->pendingMessages++;
 
     if (ext->messages.size() == 1) {
         lws_callback_on_writable(wsi);
     }
+}
+
+void Socket::sendFragment(char *data, size_t length, bool binary, size_t remainingBytes)
+{
+    int flags = 0;
+
+    SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
+    if (remainingBytes) {
+        if (ext->state == FRAGMENT_START) {
+            flags |= clws::LWS_WRITE_NO_FIN;
+            flags |= binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT;
+            ext->state = FRAGMENT_MID;
+        } else {
+            flags |= clws::LWS_WRITE_CONTINUATION | clws::LWS_WRITE_NO_FIN;
+        }
+    } else if (ext->state == FRAGMENT_MID) {
+        flags |= clws::LWS_WRITE_CONTINUATION;
+        ext->state = FRAGMENT_START;
+    } else {
+        flags |= binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT;
+    }
+
+    char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
+    memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
+    send(paddedBuffer, length, flags, nullptr);
 }
 
 char *Socket::getHeader(int header)
@@ -193,7 +231,7 @@ void Socket::close()
 {
     SocketExtension *ext = (SocketExtension *) clws::lws_wsi_user(wsi);
 
-    ext->closed = true;
+    ext->state = CLOSING;
 
     if (ext->messages.empty()) {
         shutdown(getFd(), SHUT_RDWR);
@@ -238,6 +276,9 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     info.protocols = protocols;
     info.extensions = extensions;
 
+    protocolsPtr = protocols;
+    extensionsPtr = extensions;
+
     info.gid = info.uid = -1;
     info.user = &internals;
 #ifdef LIBUV_BACKEND
@@ -252,15 +293,20 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     if (!(context = clws::lws_create_context(&info))) {
         delete [] protocols;
         delete [] extensions;
+        protocolsPtr = extensionsPtr = nullptr;
         throw nullptr;
     }
 
+    servers.push_back(this);
+
 #ifdef LIBUV_BACKEND
     clws::lws_uv_sigint_cfg(context, 0, nullptr);
-
-    // this is a train wreck right now
     clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()),[](uv_signal_t *handle, int signum) {
-            exit(0);
+        /*for (Server *server : servers) {
+            server->close(true);
+        }*/
+        exit(0); // we really need to close even if there are other uv handles in the loop
+        servers.clear();
     }, 0);
 #else
     clws::lws_ev_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND), 0);
@@ -317,20 +363,22 @@ void Server::run()
 #endif
 }
 
-void Server::close()
+void Server::close(bool force)
 {
-    // ignore handling this currently, fix later on!
-    return;
+    if (force) {
+        clws::lws_context_destroy(context);
+        delete [] (clws::lws_protocols *) protocolsPtr;
+        delete [] (clws::lws_extension *) extensionsPtr;
 
-    // remove the close listener, we do not want to tigger it
-    internals.disconnectionCallback = [](lws::Socket s){
-
-    };
-
-    // we get hangs and valgrind hell from free(context)
-    // we cannot use context in any way from the point
-    // it has been freed!
-    clws::lws_context_destroy(context);
+        // we need to shut down the process for now
+        exit(0);
+    } else {
+        internals.closingDown = true;
+        internals.disconnectionCallback = nullptr;
+        if (!internals.pendingMessages) {
+            close(true);
+        }
+    }
 }
 
 }
