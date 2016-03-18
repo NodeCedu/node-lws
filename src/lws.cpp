@@ -22,6 +22,8 @@ vector<lws::Server *> servers;
 
 namespace lws
 {
+#include <sys/socket.h>
+
 #ifdef LIBUV_BACKEND
 #include <uv.h>
 #else
@@ -172,9 +174,23 @@ Socket::Socket(clws::lws *wsi) : wsi(wsi)
 
 void Socket::send(char *data, size_t length, bool binary)
 {
-    char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
+    // this makes use of the internal lws_write buffering,
+    // known to have problems when (unix) sending more than rx_buffer_size
+    // patch limits (unix) send to rx_buffer_size improves performance but is not merged
+    /*char *paddedBuffer = new char[LWS_SEND_BUFFER_PRE_PADDING + length + LWS_SEND_BUFFER_POST_PADDING];
     memcpy(paddedBuffer + LWS_SEND_BUFFER_PRE_PADDING, data, length);
-    send(paddedBuffer, length, binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT, nullptr);
+    send(paddedBuffer, length, binary ? clws::LWS_WRITE_BINARY : clws::LWS_WRITE_TEXT, nullptr);*/
+
+    // make sure to split large messages into fragments (we could optimize this!)
+    // should be done with zero-copy, we could take ownership of the buffer!
+    size_t bufferSize = 1024 * 200;
+    for (size_t i = 0; i < length; ) {
+        size_t fragmentLength = min((size_t) bufferSize, length - i);
+        size_t remainingBytes = max((size_t) 0, length - i - bufferSize);
+
+        sendFragment(data + i, fragmentLength, binary, remainingBytes);
+        i += fragmentLength;
+    }
 }
 
 void Socket::send(char *paddedBuffer, size_t length, int flags, int *refCount)
