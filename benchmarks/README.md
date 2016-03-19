@@ -42,3 +42,10 @@ vs.
 Echo performance: 145.817 echoes/ms (node-lws run as a C++ server)
 
 * ```node-lws``` echoes messages in less than 110% the time compared to ```WebSocket++```.
+
+However, when echoing the larger 100MB buffer you get better performance with node-lws:
+
+474.98 MB/s (node-lws, not using fragmented sends)
+355.18 MB/s (WebSocket++)
+
+This was done with a 16kb bufferSize in node-lws, which still consumes less memory than the connection in WebSocket++.
