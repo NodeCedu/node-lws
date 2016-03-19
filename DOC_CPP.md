@@ -2,13 +2,16 @@
 
 ##### Overview
 ```c++
-lws::Server server(3000);
+lws::Server server({
+    port(3000),
+    bufferSize(1024 * 16)
+});
 
 server.onConnection([](lws::Socket socket) {
     socket.send("Well hello there!");
 });
 
-server.onMessage([](lws::Socket socket char *data, size_t length, bool binary) {
+server.onMessage([](lws::Socket socket, char *data, size_t length, bool binary) {
     cout << "Got a message: " << string((const char *) data, length) << endl;
 });
 
