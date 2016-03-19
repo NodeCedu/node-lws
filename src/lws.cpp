@@ -183,7 +183,8 @@ void Socket::send(char *data, size_t length, bool binary)
 
     // make sure to split large messages into fragments (we could optimize this!)
     // should be done with zero-copy, we could take ownership of the buffer!
-    size_t bufferSize = 1024 * 200;
+    lws::ServerInternals *serverInternals = (lws::ServerInternals *) lws_context_user(lws_get_context(wsi));
+    size_t bufferSize = serverInternals->bufferSize;
     for (size_t i = 0; i < length; ) {
         size_t fragmentLength = min((size_t) bufferSize, length - i);
         size_t remainingBytes = max((size_t) 0, length - i - bufferSize);
@@ -294,7 +295,11 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     protocols[0] = {protocolName ? protocolName : "default", callback, sizeof(SocketExtension)};
     protocols[1] = {nullptr, nullptr, 0};
 
-    protocols[0].rx_buffer_size = bufferSize;
+    if (bufferSize) {
+        protocols[0].rx_buffer_size = internals.bufferSize = bufferSize;
+    } else {
+        internals.bufferSize = 1024 * 4;
+    }
     internals.maxMessageSize = maxMessageSize;
 
     clws::lws_extension *extensions = new clws::lws_extension[2];

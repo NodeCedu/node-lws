@@ -65,6 +65,7 @@ struct ServerInternals {
     int adoptFd = 0;
     bool closingDown = false;
     int pendingMessages = 0;
+    size_t bufferSize;
     size_t maxMessageSize;
     Socket adoptedSocket = Socket(nullptr);
     std::function<void(Socket)> upgradeCallback;
