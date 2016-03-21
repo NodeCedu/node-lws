@@ -205,7 +205,7 @@ void on(const FunctionCallbackInfo<Value> &args)
         upgradeCallback.Reset(isolate, Local<Function>::Cast(args[1]));
         server->onUpgrade([isolate](lws::Socket socket) {
             HandleScope hs(isolate);
-            Local<Value> argv[] = {wrapSocket(&socket, isolate), generateHeaders(isolate, socket)};
+            Local<Value> argv[] = {wrapSocket(&socket, isolate)->Clone(), generateHeaders(isolate, socket)};
             Local<Function>::New(isolate, upgradeCallback)->Call(Null(isolate), 2, argv);
         });
     }
