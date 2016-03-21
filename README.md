@@ -3,7 +3,7 @@
 
 * ```node-lws``` uses less than 40% the memory per connection compared to ```ws```.
 * ```node-lws``` establishes connections in less than 10% the time compared to ```ws```.
-* ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
+* ```node-lws``` echoes messages in less than 25% the time compared to ```ws```.
 
 [Primus](https://github.com/primus/primus#lws) support is included in 5.0. Use 'lws' as transformer & report any issues here.
 The [ws interface](https://github.com/websockets/ws/blob/master/doc/ws.md) is exposed as `lws.wsServer` as opposed to ("core") `lws.Server`.
