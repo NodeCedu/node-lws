@@ -13,13 +13,13 @@ That is,
 
 Running ```make && ./bench2 10000 3000``` you will get results similar to these (10k connections):
 
-Echo performance: 25.5599 echoes/ms
+Echo performance: 25.5599 echoes/ms (31 with two bench2 processes a 5k connections)
 
-Echo performance: 119.457 echoes/ms
+Echo performance: 119.457 echoes/ms (150 with two bench2 processes a 5k connections)
 
 That is,
 
-* ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
+* ```node-lws``` echoes messages in less than 25% the time compared to ```ws```.
 
 Beyond these tests, we have also benchmarked the echoing of a large buffer a 100MB. In this test we found node-lws to achieve ~1GB/sec throughput while the ws server (with binary addons) achieved ~330MB/sec. Multiple runs were averaged.
 
