@@ -13,13 +13,13 @@ That is,
 
 Running ```make && ./bench2 10000 3000``` you will get results similar to these (10k connections):
 
-Echo performance: 25.5599 echoes/ms
+Echo performance: 25.5599 echoes/ms (31 with two bench2 processes a 5k connections)
 
-Echo performance: 119.457 echoes/ms
+Echo performance: 119.457 echoes/ms (150 with two bench2 processes a 5k connections)
 
 That is,
 
-* ```node-lws``` echoes messages in less than 30% the time compared to ```ws```.
+* ```node-lws``` echoes messages in less than 25% the time compared to ```ws```.
 
 Beyond these tests, we have also benchmarked the echoing of a large buffer a 100MB. In this test we found node-lws to achieve ~1GB/sec throughput while the ws server (with binary addons) achieved ~330MB/sec. Multiple runs were averaged.
 
@@ -35,13 +35,13 @@ Memory performance: 43.2579 connections/mb
 
 Echo performance is curretly slightly better in WebSocket++:
 
-Echo performance: 157.587 echoes/ms (WebSocket++)
+Echo performance: 157.587 echoes/ms (WebSocket++) (300 with two bench2 processes a 5k connections)
 
 vs.
 
-Echo performance: 145.817 echoes/ms (node-lws run as a C++ server)
+Echo performance: 145.817 echoes/ms (node-lws run as a C++ server) (177 with two bench2 processes a 5k connections)
 
-* ```node-lws``` echoes messages in less than 110% the time compared to ```WebSocket++```.
+* ```node-lws``` echoes messages in less than 170% the time compared to ```WebSocket++```.
 
 However, when echoing the larger 100MB buffer you get better performance with node-lws:
 
