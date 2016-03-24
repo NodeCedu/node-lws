@@ -11,18 +11,28 @@ function wsSocket(lwsSocket, server) {
 	this.next = this.prev = null;
 
 	this.send = function (message, options) {
-		if (wsSocket.lwsSocket != null) {
+		if (wsSocket.lwsSocket !== null) {
 			var binary = false;
-			if (options != undefined) {
+			if (options !== undefined) {
 				binary = options.binary;
+			}
+			if (!Buffer.isBuffer(message)) {
+				message =  new Buffer(message);
 			}
 			wsSocket.server.send(wsSocket.lwsSocket, message, binary);
 		} else {
 			// just ignore sends on closed sockets
 		}
 	}
+	this.close = function () {
+		if (wsSocket.lwsSocket !== null) {
+			wsSocket.server.close(wsSocket.lwsSocket);			
+			wsSocket.server.unlink(wsSocket);
+		}else{
+			//ignore close event on closed sockets
+		}
+	}
 }
-
 module.exports.wsServer = function wsServer(options) {
 	EventEmitter.call(this);
 	var server = new module.exports.Server(options);
@@ -34,23 +44,39 @@ module.exports.wsServer = function wsServer(options) {
 	};
 
 	this.broadcast = function (message, options) {
-		if (clients != null) {
+		if (clients !== null) {
 			var binary = false;
-			if (options != undefined) {
+			if (options !== undefined) {
 				binary = options.binary;
 			}
 			var preparedBuffer = server.prepareBuffer(new Buffer(message));
-			for (var it = clients; it != null; it = it.next) {
+			for (var it = clients; it !== null; it = it.next) {
 				server.sendPrepared(it.lwsSocket, preparedBuffer, binary);
 			}
 		}
-	}
+	};
+
+	server.unlink = function (wsSocket) {
+		if (wsSocket.prev == wsSocket.next) {
+			clients = null;
+		} else {
+			if (wsSocket.prev !== null) {
+				wsSocket.prev.next = wsSocket.next;
+			} else {
+				clients = wsSocket.next;
+			}
+			if (wsSocket.next !== null) {
+				wsSocket.next.prev = wsSocket.prev;
+			}
+		}
+		wsSocket.lwsSocket = null;
+	};
 
 	server.on('connection', function (socket) {
 		var ws = new wsSocket(socket, server);
 		server.setUserData(socket, ws);
 
-		if (clients == null) {
+		if (clients === null) {
 			clients = ws;
 		} else {
 			clients.prev = ws;
@@ -68,21 +94,9 @@ module.exports.wsServer = function wsServer(options) {
 
 	server.on('close', function (socket) {
 		var ws = server.getUserData(socket);
-		ws.lwsSocket = null;
-
-		if (ws.prev == ws.next) {
-			clients = null;
-		} else {
-			if (ws.prev != null) {
-				ws.prev.next = ws.next;
-			} else {
-				clients = ws.next;
-			}
-			if (ws.next != null) {
-				ws.next.prev = ws.prev;
-			}
+		if (wsSocket.lwsSocket !== null) {
+			server.unlink(wsSocket);
 		}
-
 		ws.emit('close');
 	});
 };
