@@ -8,7 +8,7 @@
 [Primus](https://github.com/primus/primus#lws) support is included in 5.0. Use 'lws' as transformer & report any issues here.
 The [ws interface](https://github.com/websockets/ws/blob/master/doc/ws.md) is exposed as `lws.wsServer` as opposed to ("core") `lws.Server`.
 
-**C++ developers should look into src/lws.h for the interface. I plan on making it easy to compile and use so please do send me suggestions on how to help.**
+*Feel free to follow my second project, [µWebSockets](https://github.com/alexhultman/uWebSockets).*
 
 ## Installation
 [![](https://nodei.co/npm/lws.png)](https://www.npmjs.com/package/lws)
