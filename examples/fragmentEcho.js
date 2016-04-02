@@ -15,8 +15,8 @@ server.on('connection', function (socket) {
     }
 });
 
-server.on('message', function (socket, message, binary, remainingBytes) {
-	server.sendFragment(socket, message, binary, remainingBytes);
+server.on('fragment', function (socket, fragment, binary, remainingBytes) {
+    server.sendFragment(socket, fragment, binary, remainingBytes);
 });
 
 server.on('close', function (socket) {
