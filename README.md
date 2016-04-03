@@ -157,7 +157,7 @@ Queue a Node.js Buffer for sending. This function call makes at least one intern
 
 #### sendFragment(socket, fragment, binary, remainingBytes)
 ```javascript
-sendFragment(socket, fragment, binary, remainingBytes)
+server.sendFragment(socket, fragment, binary, remainingBytes)
 ```
 
 Like [`send`](#sendsocket-message-binary) but for fragmented messages.
