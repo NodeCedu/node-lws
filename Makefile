@@ -1,6 +1,6 @@
 CPP_FILES := $(wildcard src/*.cpp)
 LWS := ../libwebsockets/lib
-C_FILES := $(LWS)/base64-decode.c $(LWS)/handshake.c $(LWS)/libwebsockets.c $(LWS)/service.c $(LWS)/pollfd.c $(LWS)/output.c $(LWS)/parsers.c $(LWS)/context.c $(LWS)/alloc.c $(LWS)/header.c $(LWS)/client.c $(LWS)/client-handshake.c $(LWS)/client-parser.c $(LWS)/ssl.c $(LWS)/sha-1.c $(LWS)/lws-plat-unix.c $(LWS)/server.c $(LWS)/server-handshake.c $(LWS)/extension.c $(LWS)/extension-permessage-deflate.c $(LWS)/libuv.c
+C_FILES := $(LWS)/base64-decode.c $(LWS)/handshake.c $(LWS)/libwebsockets.c $(LWS)/service.c $(LWS)/pollfd.c $(LWS)/output.c $(LWS)/parsers.c $(LWS)/context.c $(LWS)/alloc.c $(LWS)/header.c $(LWS)/client.c $(LWS)/client-handshake.c $(LWS)/client-parser.c $(LWS)/ssl.c $(LWS)/ssl-server.c $(LWS)/ssl-client.c $(LWS)/sha-1.c $(LWS)/lws-plat-unix.c $(LWS)/server.c $(LWS)/server-handshake.c $(LWS)/extension.c $(LWS)/extension-permessage-deflate.c $(LWS)/libuv.c
 C_FLAGS := -c -O3 -fPIC $(C_FILES) -I ../libwebsockets
 CPP_FLAGS := -std=c++11 -O3 -I $(LWS) -I ../libwebsockets -shared -fPIC -DLIBUV_BACKEND $(CPP_FILES)
 

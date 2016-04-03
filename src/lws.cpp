@@ -352,13 +352,13 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
 
 #ifdef LIBUV_BACKEND
     clws::lws_uv_sigint_cfg(context, 0, nullptr);
-    clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()),[](uv_signal_t *handle, int signum) {
-        /*for (Server *server : servers) {
-            server->close(true);
-        }*/
+    clws::lws_uv_initloop(context, (lws::uv_loop_t *) (loop = uv_default_loop()),/*[](uv_signal_t *handle, int signum) {
+        //for (Server *server : servers) {
+            //server->close(true);
+        //}
         exit(0); // we really need to close even if there are other uv handles in the loop
         servers.clear();
-    }, 0);
+    },*/ 0);
 #else
     clws::lws_ev_initloop(context, loop = ev_loop_new(LWS_FD_BACKEND), 0);
     clws::lws_ev_sigint_cfg(context, 0, nullptr);
