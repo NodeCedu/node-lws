@@ -300,6 +300,10 @@ Server::Server(unsigned int port, const char *protocolName, unsigned int ka_time
     } else {
         internals.bufferSize = 1024 * 4;
     }
+
+    if (!maxMessageSize) {
+        maxMessageSize = 1024 * 1024 * 16;
+    }
     internals.maxMessageSize = maxMessageSize;
 
     clws::lws_extension *extensions = new clws::lws_extension[2];
