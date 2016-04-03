@@ -155,6 +155,13 @@ server.send(socket, buffer, false);
 
 Queue a Node.js Buffer for sending. This function call makes at least one internal memory allocation and one memory copy. ```message``` is sent as binary if the (boolean) ```binary``` flag is ```true```.
 
+#### sendFragment(socket, fragment, binary, remainingBytes)
+```javascript
+sendFragment(socket, fragment, binary, remainingBytes)
+```
+
+Like [`send`](#sendsocket-message-binary) but for fragmented messages.
+
 #### close(socket)
 ```javascript
 server.close(socket);
