@@ -9,8 +9,8 @@ SOURCES += lws.cpp \
 HEADERS += \
     lws.h
 
-INCLUDEPATH += /usr/include/node
-
 LIBS += -l:libwebsockets.a -luv -lssl -lcrypto -s
 
-QMAKE_CXXFLAGS += -fPIC -DLWS_USE_LIBUV
+QMAKE_CXXFLAGS += -fPIC -DLIBUV_BACKEND
+
+INCLUDEPATH += ../node_versions/node-v4.3.0-linux-x64/include/node

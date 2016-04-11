@@ -1,13 +1,22 @@
+CPP_FILES := $(wildcard src/*.cpp)
+LWS := ../libwebsockets/lib
+C_FILES := $(LWS)/base64-decode.c $(LWS)/handshake.c $(LWS)/libwebsockets.c $(LWS)/service.c $(LWS)/pollfd.c $(LWS)/output.c $(LWS)/parsers.c $(LWS)/context.c $(LWS)/alloc.c $(LWS)/header.c $(LWS)/client.c $(LWS)/client-handshake.c $(LWS)/client-parser.c $(LWS)/ssl.c $(LWS)/ssl-server.c $(LWS)/ssl-client.c $(LWS)/sha-1.c $(LWS)/lws-plat-unix.c $(LWS)/server.c $(LWS)/server-handshake.c $(LWS)/extension.c $(LWS)/extension-permessage-deflate.c $(LWS)/libuv.c
+C_FLAGS := -c -O3 -fPIC $(C_FILES) -I ../libwebsockets
+CPP_FLAGS := -std=c++11 -O3 -I $(LWS) -I ../libwebsockets -shared -fPIC -DLIBUV_BACKEND $(CPP_FILES)
+
 default:
-	make `(uname -s)`
+	for path in node_versions/*; do if [ -d $$path ]; then NODE=$$path make `(uname -s)`; fi; done
 	cp README.md dist/README.md
 	cp LICENSE dist/LICENSE
 Linux:
-	g++ -std=c++11 -O3 -shared -fPIC -DLWS_USE_LIBUV -I/usr/include/node src/addon.cpp src/lws.cpp -l:libwebsockets.a -luv -lssl -lcrypto -s -o dist/lws_linux.node
+	gcc $(C_FLAGS) -I $$NODE/include/node
+	g++ $(CPP_FLAGS) -I $$NODE/include/node `(ls *.o | tr '\n' ' ')` -s -o dist/lws_linux_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
+	rm -f *.o
 Darwin:
-	g++ -std=c++11 -stdlib=libc++ -DLWS_USE_LIBUV -mmacosx-version-min=10.7 -O3 -shared -fPIC -I/usr/include/node src/addon.cpp src/lws.cpp -l:libwebsockets.a -luv -lssl -lcrypto -s -o dist/lws_darwin.node
+	gcc -mmacosx-version-min=10.7 $(C_FLAGS) -I $$NODE/include/node
+	g++ -stdlib=libc++ -mmacosx-version-min=10.7 -undefined dynamic_lookup $(CPP_FLAGS) -I $$NODE/include/node `(ls *.o | tr '\n' ' ')` -o dist/lws_darwin_`$$NODE/bin/node -e "console.log(process.versions.modules)"`.node
+	rm -f *.o
 clean:
 	rm -f dist/README.md
 	rm -f dist/LICENSE
-	rm -f dist/lws_linux.node
-	rm -f dist/lws_darwin.node
+	rm -f dist/lws_*.node

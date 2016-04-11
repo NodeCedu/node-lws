@@ -1,3 +1,5 @@
+/* this is a simple echo server */
+
 #include <iostream>
 #include <string>
 using namespace std;
@@ -6,27 +8,27 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    lws::Server server(3000);
+    try {
+        lws::Server server(3000);
 
-    server.onConnection([](lws::Socket socket) {
-        cout << "Connection" << endl;
-        string str = "some message";
-        socket.send(str, false);
-        str = "some other message";
-        socket.send(str, false);
-        str = "some third message";
-        socket.send(str, false);
-    });
+        server.onConnection([](lws::Socket socket) {
 
-    server.onDisconnection([](lws::Socket socket) {
-        cout << "Disconnection" << endl;
-    });
+        });
 
-    server.onMessage([](lws::Socket socket, std::string message) {
-        cout << "Message: " << message << endl;
-    });
+        server.onDisconnection([](lws::Socket socket) {
 
-    cout << "Running server on port 3000" << endl;
-    server.run();
+        });
+
+        server.onMessage([](lws::Socket socket, char *data, size_t length, bool binary, size_t remainingBytes) {
+            socket.sendFragment(data, length, binary, remainingBytes);
+        });
+
+        cout << "Running echo server on port 3000" << endl;
+        server.run();
+    }
+    catch (...) {
+        cout << "Could not start server!" << endl;
+        return -1;
+    }
     return 0;
 }
